@@ -25,6 +25,7 @@ Thumbs.db
 # Data (large files)
 *.csv
 *.json
+!static/data/*.json
 !package.json
 !package-lock.json
 extracted_cases/

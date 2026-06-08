@@ -55,6 +55,31 @@ def index():
     """主页"""
     return render_template("index.html")
 
+@app.route("/dashboard")
+def dashboard():
+    """数据看板"""
+    return render_template("dashboard.html")
+
+@app.route("/api/stats")
+def api_stats():
+    """返回案例统计数据 JSON"""
+    import json, os
+    stats_path = os.path.join(os.path.dirname(__file__), "static", "data", "stats.json")
+    try:
+        with open(stats_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        return jsonify(data)
+    except FileNotFoundError:
+        import subprocess, sys
+        script = os.path.join(os.path.dirname(__file__), "data_analysis.py")
+        subprocess.run([sys.executable, script], capture_output=True)
+        try:
+            with open(stats_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            return jsonify(data)
+        except:
+            return jsonify({"error": "stats generation failed", "total_cases": 0})
+
 @app.route("/status")
 def status():
     """服务状态检查"""
