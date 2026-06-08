@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>法眼AI - 智能法律案例分析系统</title>
+<!-- Google Fonts -->
+<!-- Google Fonts removed for offline use -->
+<style>
+/* ============================================================
+   法眼AI - 智能法律案例分析系统 样式表
+   ============================================================ */
+
+/* ---- CSS Variables ---- */
+:root {
+  --primary:    #7F1D1D;
+  --primary-hv: #991B1B;
+  --primary-lt: #FEF2F2;
+  --primary-bg: #FDF2F2;
+  --gold:       #B45309;
+  --gold-lt:    #FFFBEB;
+  --success:    #065F46;
+  --success-bg: #ECFDF5;
+  --warning:    #92400E;
+  --warning-bg: #FFFBEB;
+  --error:      #991B1B;
+  --error-bg:   #FEF2F2;
+  --gray-50:   #F9FAFB;
+  --gray-100:  #F3F4F6;
+  --gray-200:  #E5E7EB;
+  --gray-300:  #D1D5DB;
+  --gray-400:  #9CA3AF;
+  --gray-500:  #6B7280;
+  --gray-600:  #4B5563;
+  --gray-700:  #374151;
+  --gray-800:  #1F2937;
+  --gray-900:  #111827;
+  --radius:    12px;
+  --radius-sm: 8px;
+  --shadow:    0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+  --shadow-lg: 0 4px 24px rgba(0,0,0,.08), 0 1px 4px rgba(0,0,0,.04);
+  --transition: .2s cubic-bezier(.4,0,.2,1);
+  --font-sans: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-serif: 'Noto Serif SC', 'Songti SC', serif;
+}
+
+/* ---- Reset ---- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--gray-800);
+  background: var(--gray-50);
+  line-height: 1.7;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ---- Header ---- */
+.header {
+  background: linear-gradient(135deg, var(--primary) 0%, #5B0E0E 100%);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 16px rgba(127,29,29,.25);
+}
+
+.header-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.logo-icon svg {
+  width: 44px;
+  height: 44px;
+  display: block;
+}
+
+.brand-text h1 {
+  font-family: var(--font-serif);
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.3;
+}
+
+.brand-text p {
+  font-size: .78rem;
+  opacity: .78;
+  font-weight: 300;
+}
+
+.header-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .85rem;
+  opacity: .9;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--gray-400);
+  transition: background var(--transition);
+}
+.status-dot.online  { background: #34D399; }
+.status-dot.offline { background: #F87171; }
+
+/* ---- Main Container ---- */
+.main-container {
+  max-width: 1280px;
+  margin: 24px auto;
+  padding: 0 24px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  flex: 1;
+}
+
+@media (max-width: 900px) {
+  .main-container {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ---- Card ---- */
+.card {
+  background: #fff;
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--gray-200);
+}
+
+.card-header {
+  margin-bottom: 20px;
+}
+
+.card-header h2 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 4px;
+}
+
+.card-header p {
+  font-size: .85rem;
+  color: var(--gray-500);
+}
+
+/* ---- Form ---- */
+.form-group {
+  margin-bottom: 18px;
+}
+
+.form-label {
+  display: block;
+  font-size: .88rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 6px;
+}
+
+.form-label .required {
+  color: var(--error);
+}
+
+.label-icon {
+  margin-right: 4px;
+}
+
+.form-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 14px 16px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-sans);
+  font-size: .92rem;
+  color: var(--gray-800);
+  background: var(--gray-50);
+  resize: vertical;
+  transition: var(--transition);
+  line-height: 1.7;
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(127,29,29,.08);
+  background: #fff;
+}
+
+.form-textarea::placeholder {
+  color: var(--gray-400);
+  font-size: .85rem;
+}
+
+.char-counter {
+  text-align: right;
+  font-size: .78rem;
+  color: var(--gray-400);
+  margin-top: 4px;
+}
+.char-counter.warn { color: var(--warning); }
+.char-counter.over { color: var(--error); }
+
+.form-input {
+  width: 100%;
+  padding: 10px 14px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-sm);
+  font-size: .92rem;
+  color: var(--gray-800);
+  background: var(--gray-50);
+  transition: var(--transition);
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(127,29,29,.08);
+  background: #fff;
+}
+
+.form-row {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.form-group-half {
+  flex: 1;
+  min-width: 140px;
+  margin-bottom: 0;
+}
+
+/* ---- Checkbox ---- */
+.form-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: .88rem;
+  color: var(--gray-600);
+  user-select: none;
+}
+
+.form-check input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.check-label {
+  transition: color var(--transition);
+}
+.form-check input:checked + .check-label {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+/* ---- Buttons ---- */
+.btn-row {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 22px;
+  border-radius: var(--radius-sm);
+  font-size: .92rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font-sans);
+}
+
+.btn:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(127,29,29,.25);
+}
+.btn-primary:hover:not(:disabled) {
+  background: var(--primary-hv);
+  box-shadow: 0 4px 16px rgba(127,29,29,.35);
+  transform: translateY(-1px);
+}
+
+.btn-outline {
+  background: #fff;
+  color: var(--primary);
+  border: 1.5px solid var(--gray-300);
+}
+.btn-outline:hover:not(:disabled) {
+  background: var(--primary-lt);
+  border-color: var(--primary);
+}
+
+/* ---- Classify Badge ---- */
+.classify-badge {
+  margin-top: 16px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--primary-bg), var(--gold-lt));
+  border: 1px solid var(--primary);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  font-size: .85rem;
+}
+
+.classify-badge .cls-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: .82rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,.04);
+}
+
+.cls-type-civil  { color: #065F46; border: 1px solid #A7F3D0; }
+.cls-type-crime  { color: #991B1B; border: 1px solid #FECACA; }
+.cls-type-cross  { color: #92400E; border: 1px solid #FDE68A; }
+.cls-confidence  { color: var(--gray-600); border: 1px solid var(--gray-200); }
+
+/* ---- Empty State ---- */
+.empty-state {
+  text-align: center;
+  padding: 60px 28px;
+}
+
+.empty-icon {
+  margin-bottom: 20px;
+}
+
+.empty-icon svg {
+  width: 100px;
+  height: 100px;
+}
+
+.empty-state h3 {
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+}
+
+.empty-state p {
+  font-size: .9rem;
+  color: var(--gray-500);
+  margin-bottom: 4px;
+}
+
+.text-muted {
+  font-size: .82rem;
+  color: var(--gray-400) !important;
+}
+
+/* ---- Loading ---- */
+.loading-card {
+  text-align: center;
+  padding: 60px 28px;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border: 3px solid var(--gray-200);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+  margin: 0 auto 18px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-card p {
+  font-size: .92rem;
+  color: var(--gray-600);
+}
+
+/* ---- Result Card ---- */
+.result-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.tag {
+  display: inline-block;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+.tag-civil  { background: #D1FAE5; color: #065F46; }
+.tag-crime  { background: #FEE2E2; color: #991B1B; }
+.tag-cross  { background: #FEF3C7; color: #92400E; }
+
+/* Meta Panel */
+.meta-panel {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--gray-100);
+  margin-bottom: 16px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: .85rem;
+}
+
+.meta-label {
+  color: var(--gray-500);
+  font-size: .8rem;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: .8rem;
+  font-weight: 700;
+}
+.badge-low     { background: #D1FAE5; color: #065F46; }
+.badge-medium  { background: #DBEAFE; color: #1E40AF; }
+.badge-high    { background: #FEF3C7; color: #92400E; }
+.badge-ultra   { background: #FEE2E2; color: #991B1B; }
+
+/* ---- Alert ---- */
+.alert {
+  padding: 14px 18px;
+  border-radius: var(--radius-sm);
+  font-size: .88rem;
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+.alert-warning {
+  background: var(--warning-bg);
+  border: 1px solid #FDE68A;
+  color: var(--warning);
+}
+.alert-error {
+  background: var(--error-bg);
+  border: 1px solid #FECACA;
+  color: var(--error);
+}
+
+/* ---- Conclusions ---- */
+.conclusions-section {
+  margin-top: 8px;
+}
+
+.conclusions-section h3 {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-800);
+  margin-bottom: 14px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--primary);
+  display: inline-block;
+}
+
+.conclusion-item {
+  display: flex;
+  gap: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--primary);
+  transition: var(--transition);
+}
+.conclusion-item:hover {
+  box-shadow: var(--shadow);
+}
+
+.conclusion-index {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .82rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.conclusion-body {
+  flex: 1;
+}
+
+.conclusion-content {
+  font-size: .92rem;
+  line-height: 1.75;
+  color: var(--gray-800);
+}
+
+.conclusion-citations {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.citation-tag {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 20px;
+  font-size: .78rem;
+  font-weight: 500;
+  background: var(--primary-lt);
+  color: var(--primary);
+  border: 1px solid rgba(127,29,29,.2);
+}
+
+/* ---- Retrieve List ---- */
+.retrieve-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.retrieve-item {
+  padding: 16px;
+  background: var(--gray-50);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gray-200);
+  transition: var(--transition);
+}
+.retrieve-item:hover {
+  border-color: var(--primary);
+  box-shadow: var(--shadow);
+}
+
+.retrieve-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.retrieve-badge {
+  font-size: .72rem;
+  font-weight: 700;
+  color: var(--gold);
+  background: var(--gold-lt);
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.retrieve-score {
+  font-size: .78rem;
+  color: var(--gray-500);
+}
+
+.retrieve-title {
+  font-size: .85rem;
+  font-weight: 600;
+  color: var(--gray-800);
+  margin-bottom: 6px;
+}
+
+.retrieve-meta {
+  font-size: .78rem;
+  color: var(--gray-500);
+  display: flex;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.retrieve-points {
+  font-size: .82rem;
+  color: var(--gray-600);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ---- Footer ---- */
+.footer {
+  background: var(--gray-800);
+  color: var(--gray-400);
+  padding: 20px 24px;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+.footer p {
+  font-size: .82rem;
+  margin-bottom: 4px;
+}
+
+.footer-disclaimer {
+  font-size: .75rem;
+  opacity: .7;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 900px) {
+  .main-container {
+    grid-template-columns: 1fr;
+  }
+  .brand-text h1 {
+    font-size: 1.25rem;
+  }
+  .card {
+    padding: 20px;
+  }
+}
+
+</style>
+</head>
+<body>
+<!-- ========== 顶部导航 ========== -->
+<header class="header">
+  <div class="header-inner">
+    <div class="brand">
+      <div class="logo-icon">
+        <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="48" height="48" rx="12" fill="url(#logo-grad)"/>
+          <defs><linearGradient id="logo-grad" x1="0" y1="0" x2="48" y2="48"><stop offset="0%" stop-color="#dc2626"/><stop offset="100%" stop-color="#991b1b"/></linearGradient></defs>
+          <text x="24" y="32" text-anchor="middle" fill="white" font-size="26" font-weight="900" font-family="serif">法</text>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <h1>法眼AI</h1>
+        <p>智能法律案例分析系统</p>
+      </div>
+    </div>
+    <div class="header-status" id="headerStatus">
+      <span class="status-dot online" id="statusDot"></span>
+      <span class="status-text" id="statusText">在线 · DeepSeek-Chat · 10,241 条案例</span>
+    </div>
+  </div>
+</header>
+
+<!-- ========== 主体 ========== -->
+<main class="main-container">
+
+  <!-- 左侧：输入区 -->
+  <section class="input-section">
+    <div class="card">
+      <div class="card-header">
+        <h2>📋 案情输入</h2>
+        <p>请输入您需要分析的案件详情</p>
+      </div>
+
+      <!-- Step 1: 案情描述 -->
+      <div class="form-group">
+        <label class="form-label">
+          案情描述 <span class="required">*</span>
+        </label>
+        <textarea id="caseText" class="form-textarea"
+          placeholder="请输入完整的案件描述，例如：&#10;&#10;甲借用乙的银行账户收取经营款项，后乙涉及债务纠纷被强制执行，甲主张账户内资金属于自己所有，请求排除强制执行..."
+          rows="8" maxlength="5000"></textarea>
+        <div class="char-counter">
+          <span id="charCount">0</span> / 5000
+        </div>
+      </div>
+
+      <!-- Step 2: 快速信息 -->
+      <div class="form-row">
+        <div class="form-group form-group-half">
+          <label class="form-label">
+            <span class="label-icon">💰</span> 涉案金额（元）
+          </label>
+          <input type="number" id="amount" class="form-input"
+            placeholder="例如：500000" min="0" step="1">
+        </div>
+        <div class="form-group form-group-half">
+          <label class="form-label">
+            <span class="label-icon">👥</span> 当事人数量
+          </label>
+          <input type="number" id="partyCount" class="form-input"
+            placeholder="例如：3" min="1" max="50" step="1" value="2">
+        </div>
+      </div>
+
+      <!-- Step 3: 额外指标 -->
+      <div class="form-row">
+        <label class="form-check">
+          <input type="checkbox" id="evidenceGap">
+          <span class="check-label">存在证据缺口</span>
+        </label>
+        <label class="form-check">
+          <input type="checkbox" id="criminalCross">
+          <span class="check-label">刑民交叉案件</span>
+        </label>
+      </div>
+
+      <!-- 操作按钮 -->
+      <div class="btn-row">
+        <button type="button" class="btn btn-outline" id="btnClassify">
+          <span>🔍</span> 自动识别
+        </button>
+        <button type="button" class="btn btn-primary" id="btnAnalyze">
+          <span>⚖️</span> 开始分析
+        </button>
+      </div>
+
+      <!-- 分类结果内联显示 -->
+      <div id="classifyResult" class="classify-badge" style="display:none;"></div>
+
+    </div>
+
+    <!-- 检索面板 -->
+    <div class="card" id="retrieveCard" style="display:none;">
+      <div class="card-header">
+        <h2>📚 相似案例检索</h2>
+        <p id="retrieveSummary"></p>
+      </div>
+      <div id="retrieveResults" class="retrieve-list"></div>
+    </div>
+  </section>
+
+  <!-- 右侧：结果区 -->
+  <section class="result-section">
+    <!-- 加载状态 -->
+    <div id="loadingState" class="card loading-card" style="display:none;">
+      <div class="spinner"></div>
+      <p id="loadingText">正在分析中...</p>
+    </div>
+
+    <!-- 空状态 -->
+    <div id="emptyState" class="card empty-state">
+      <div class="empty-icon">
+        <svg viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="60" cy="60" r="50" stroke="#e5e7eb" stroke-width="4" stroke-dasharray="8 4"/>
+          <text x="60" y="68" text-anchor="middle" fill="#9ca3af" font-size="40" font-family="serif">⚖</text>
+        </svg>
+      </div>
+      <h3>等待案件输入</h3>
+      <p>请在左侧输入案情描述，然后点击「开始分析」</p>
+      <p class="text-muted">系统将基于 <strong>76,000+</strong> 真实判例进行智能分析</p>
+    </div>
+
+    <!-- 分析结果 -->
+    <div id="resultState" class="card result-card" style="display:none;">
+      <div class="card-header result-header">
+        <h2>📊 分析结果</h2>
+        <span id="caseTypeBadge" class="tag"></span>
+      </div>
+
+      <!-- 复杂度 + 律师介入 -->
+      <div id="metaPanel" class="meta-panel">
+        <div class="meta-item">
+          <span class="meta-label">案件复杂程度</span>
+          <span id="complexityBadge" class="badge"></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">涉案金额</span>
+          <span id="displayAmount">-</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">当事人数</span>
+          <span id="displayPartyCount">-</span>
+        </div>
+      </div>
+
+      <!-- 律师介入提示 -->
+      <div id="lawyerAlert" class="alert alert-warning" style="display:none;"></div>
+
+      <!-- 分析结论 -->
+      <div class="conclusions-section">
+        <h3>分析结论</h3>
+        <div id="conclusionsList"></div>
+      </div>
+
+      <!-- 错误 -->
+      <div id="errorAlert" class="alert alert-error" style="display:none;"></div>
+    </div>
+  </section>
+
+</main>
+
+<!-- ========== 底部 ========== -->
+<footer class="footer">
+  <div class="footer-inner">
+    <p>法眼AI · 智能法律案例分析系统</p>
+    <p class="footer-disclaimer">
+      ⚠️ 本系统仅供法律研究参考，不构成法律意见。AI分析结果仅供参考，请以专业律师意见为准。
+    </p>
+  </div>
+</footer>
+
+<!-- 隐藏的提示模板 -->
+<template id="tmplConclusion">
+  <div class="conclusion-item">
+    <div class="conclusion-index"></div>
+    <div class="conclusion-body">
+      <p class="conclusion-content"></p>
+      <div class="conclusion-citations"></div>
+    </div>
+  </div>
+</template>
+
+<template id="tmplCitation">
+  <span class="citation-tag"></span>
+</template>
+
+<template id="tmplRetrieveItem">
+  <div class="retrieve-item">
+    <div class="retrieve-header">
+      <span class="retrieve-badge">案例</span>
+      <span class="retrieve-score"></span>
+    </div>
+    <h4 class="retrieve-title"></h4>
+    <p class="retrieve-meta">
+      <span class="retrieve-court"></span>
+      <span class="retrieve-cause"></span>
+    </p>
+    <p class="retrieve-points"></p>
+  </div>
+</template>
+
+<script>
+/* 法眼AI v2 - 健壮版 */
+(function() {
+  const $ = id => document.getElementById(id);
+  if (!$('btnClassify') || !$('btnAnalyze')) {
+    console.warn('DOM 未就绪，等待...');
+    setTimeout(arguments.callee, 100);
+    return;
+  }
+
+  const API_BASE = '';
+  let classifyData = null;
+
+  async function fetchJSON(url, opts) {
+    try {
+      const r = await fetch(API_BASE + url, opts);
+      return r.ok ? await r.json() : { error: 'HTTP ' + r.status };
+    } catch(e) { return { error: e.message }; }
+  }
+
+  async function loadExamples() {
+    try {
+      const d = await fetchJSON('/api/examples');
+      if (!d.examples) return;
+      const bar = document.createElement('div');
+      bar.className = 'examples-bar';
+      bar.innerHTML = '<span style="font-size:.78rem;color:#9CA3AF;margin-right:6px;">💡 快速示例：</span>';
+      d.examples.forEach(ex => {
+        const b = document.createElement('button');
+        b.className = 'btn-example'; b.textContent = ex.title;
+        b.onclick = () => { $('caseText').value = ex.text; $('charCount').textContent = ex.text.length; if(ex.amount)$('amount').value=ex.amount; if(ex.party_count)$('partyCount').value=ex.party_count; };
+        bar.appendChild(b);
+      });
+      $('caseText').parentElement.insertBefore(bar, $('caseText'));
+    } catch(e) {}
+  }
+
+  window._fayan = {
+    classify: async function() {
+      const text = $('caseText').value.trim();
+      if (text.length < 5) return alert('请输入至少5个字');
+      const btn = $('btnClassify'); btn.disabled = true; btn.innerHTML = '识别中...';
+      try {
+        const d = await fetchJSON('/api/classify', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({case_text:text}) });
+        classifyData = d;
+        const cls = $('classifyResult');
+        const tc = {'民事':'cls-type-civil','刑事':'cls-type-crime','刑民交叉':'cls-type-cross'};
+        cls.style.display = 'flex';
+        cls.innerHTML = '<strong style="font-size:.82rem;color:#6B7280;">识别结果：</strong>' +
+          `<span class="cls-item ${tc[d.case_type]||''}">${d.case_type||'?'}</span>` +
+          `<span class="cls-item cls-confidence">置信度 ${Math.round((d.confidence||0)*100)}%</span>` +
+          (d.amount ? `<span class="cls-item cls-confidence">💰 ${fmtAmt(d.amount)}</span>` : '') +
+          (d.party_count ? `<span class="cls-item cls-confidence">👥 ${d.party_count} 人</span>` : '');
+        if (d.amount && !$('amount').value) $('amount').value = Math.round(d.amount);
+        if (d.party_count) $('partyCount').value = d.party_count;
+        if (d.case_type === '刑民交叉') $('criminalCross').checked = true;
+      } catch(e) { alert('分类失败: '+e.message); }
+      finally { btn.disabled = false; btn.innerHTML = '🔍 自动识别'; }
+    },
+
+    analyze: async function() {
+      const text = $('caseText').value.trim();
+      if (text.length < 10) return alert('请输入至少10个字');
+      if (text.length > 5000) return alert('请控制在5000字以内');
+      
+      const btnA = $('btnAnalyze'), btnC = $('btnClassify');
+      btnA.disabled = true; btnC.disabled = true;
+      btnA.innerHTML = '⏳ 分析中...';
+      
+      $('emptyState').style.display = 'none';
+      $('loadingState').style.display = 'block';
+      $('loadingText').textContent = '正在检索相似案例...';
+      $('resultState').style.display = 'block';
+      $('errorAlert').style.display = 'none';
+      $('lawyerAlert').style.display = 'none';
+      $('conclusionsList').innerHTML = '';
+      $('caseTypeBadge').textContent = '分析中...';
+      
+      const streamDiv = document.createElement('div');
+      streamDiv.style.cssText = 'padding:16px;background:#F9FAFB;border-radius:8px;min-height:100px;font-size:.92rem;line-height:1.8;white-space:pre-wrap;word-break:break-word;';
+      $('conclusionsList').appendChild(streamDiv);
+      
+      try {
+        const resp = await fetch(API_BASE + '/api/analyze/stream', {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            case_text:text,
+            amount: parseFloat($('amount').value)||0,
+            party_count: parseInt($('partyCount').value)||2,
+            has_evidence_gap: $('evidenceGap').checked,
+            has_criminal_cross: $('criminalCross').checked,
+          })
+        });
+        
+        if (!resp.ok) { $('errorAlert').style.display='block'; $('errorAlert').textContent='❌ HTTP '+resp.status; btnA.disabled=false; btnC.disabled=false; btnA.innerHTML='⚖️ 开始分析'; return; }
+        
+        const reader = resp.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        
+        while (true) {
+          const {done, value} = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, {stream:true});
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (!line.startsWith('data: ')) continue;
+            const d = line.slice(6).trim();
+            if (d === '[DONE]') continue;
+            try {
+              const msg = JSON.parse(d);
+              if (msg.type === 'meta') {
+                $('loadingState').style.display = 'none';
+                $('caseTypeBadge').textContent = msg.case_kind==='criminal'?'刑事':'民事';
+                $('caseTypeBadge').className = 'tag '+(msg.case_kind==='criminal'?'tag-crime':'tag-civil');
+                const cm = {low:'简单',medium:'中等',high:'复杂',ultra:'极复杂'};
+                $('complexityBadge').textContent = cm[msg.complexity]||msg.complexity;
+                $('complexityBadge').className = 'badge badge-'+(msg.complexity||'medium');
+              } else if (msg.type === 'text') {
+                streamDiv.textContent += msg.content;
+              } else if (msg.type === 'warning') {
+                $('lawyerAlert').style.display='block';
+                $('lawyerAlert').innerHTML = '⚠️ <strong>建议寻求专业律师</strong><br>'+msg.message;
+              } else if (msg.type === 'error') {
+                $('errorAlert').style.display='block';
+                $('errorAlert').textContent = '❌ '+msg.message;
+              }
+            } catch(e) {}
+          }
+        }
+        
+        // 添加导出按钮
+        const bar = document.createElement('div');
+        bar.style.cssText = 'display:flex;gap:8px;margin-top:12px;';
+        bar.innerHTML = '<button class="btn btn-outline" style="font-size:.82rem;padding:6px 14px;" onclick="navigator.clipboard.writeText(this.parentElement.previousSibling.textContent).then(()=>alert('已复制! '))">📋 复制</button>';
+        $('conclusionsList').appendChild(bar);
+        
+        // 检索相似案例
+        try {
+          const rd = await fetchJSON('/api/retrieve', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({query:text, top_k:5}) });
+          if (rd.results) {
+            $('retrieveCard').style.display = 'block';
+            $('retrieveSummary').textContent = '找到 '+rd.total+' 条相似案例';
+            const list = $('retrieveResults'); list.innerHTML = '';
+            rd.results.forEach(r => {
+              const div = document.createElement('div');
+              div.className = 'retrieve-item';
+              div.innerHTML = `<div class="retrieve-header"><span class="retrieve-badge">案例</span><span class="retrieve-score">匹配度 ${(r.score*100).toFixed(1)}%</span></div><h4 class="retrieve-title">${r.title||r.case_number}</h4><p class="retrieve-meta"><span>${r.court}</span><span>${r.cause_of_action}</span></p><p class="retrieve-points">${r.ruling_points||''}</p>`;
+              list.appendChild(div);
+            });
+          }
+        } catch(e) {}
+        
+      } catch(e) {
+        $('errorAlert').style.display = 'block';
+        $('errorAlert').textContent = '❌ '+e.message;
+      }
+      btnA.disabled = false; btnC.disabled = false;
+      btnA.innerHTML = '⚖️ 开始分析';
+    }
+  };
+
+  // 初始化
+  $('caseText').addEventListener('input', function() { $('charCount').textContent = this.value.length; });
+  $('caseText').addEventListener('keydown', function(e) { if(e.ctrlKey && e.key==='Enter') window._fayan.analyze(); });
+  loadExamples();
+  
+  // 状态检查（静默更新）
+  fetchJSON('/status').then(d => {
+    if (d.ok) {
+      $('statusDot').className = 'status-dot online';
+      $('statusText').textContent = '在线 · '+d.model+' · '+(d.cases_count||0)+' 条案例';
+    }
+  }).catch(()=>{});
+})();
+
+function fmtAmt(v) {
+  if (!v) return '-';
+  if (v>=1e8) return (v/1e8).toFixed(1)+'亿元';
+  if (v>=1e4) return (v/1e4).toFixed(1)+'万元';
+  return v.toLocaleString()+'元';
+}
+
+</script>
+</body>
+</html>

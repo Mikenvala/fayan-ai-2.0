@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  fayan-ai:
+    build: .
+    container_name: fayan-ai
+    ports:
+      - "5099:5099"
+    environment:
+      - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+    volumes:
+      - ./extracted_cases:/app/extracted_cases
+    restart: unless-stopped
