@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<style>
+  @page { size: A4; margin: 2cm 2.2cm; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "STHeiti", "Heiti SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    font-size: 10pt; color: #2d2d2d; line-height: 1.7; padding: 40px 44px;
+  }
+  .header-name { font-size: 24pt; font-weight: 700; text-align: center; letter-spacing: 4pt; margin-bottom: 2pt; }
+  .header-target { font-size: 11pt; text-align: center; color: #555; margin-bottom: 2pt; }
+  .contact { font-size: 9pt; text-align: center; color: #888; margin-bottom: 14pt; padding-bottom: 8pt; border-bottom: 0.5pt solid #ccc; }
+  .section-title { font-size: 12.5pt; font-weight: 700; margin-top: 12pt; margin-bottom: 5pt; padding-left: 8pt; border-left: 3pt solid #7F1D1D; line-height: 1.4; }
+  .edu-main { font-weight: 600; margin-bottom: 1pt; }
+  .edu-sub { font-size: 9.5pt; color: #555; margin-bottom: 3pt; }
+  .proj-header { font-weight: 600; margin-top: 7pt; margin-bottom: 1pt; }
+  .proj-date { color: #666; font-weight: 400; }
+  ul { padding-left: 16pt; margin-bottom: 3pt; }
+  li { font-size: 9.5pt; color: #444; margin-bottom: 1.5pt; text-align: justify; }
+  .skill-line { font-size: 9.5pt; color: #444; margin-bottom: 1.5pt; }
+  .skill-label { font-weight: 600; color: #333; }
+  .eval-text { font-size: 9.5pt; color: #444; text-align: justify; line-height: 1.8; }
+  .footer-note { margin-top: 16pt; font-size: 8pt; color: #bbb; text-align: center; border-top: 0.5pt solid #eee; padding-top: 5pt; }
+</style>
+</head>
+<body>
+
+<div class="header-name">王 志 达</div>
+<div class="header-target">求职意向：大数据分析与智能体开发（线上实习）</div>
+<div class="contact">
+  2022级 ｜ 信息资源管理专业 ｜ 南京农业大学 ｜ 电话：18003512722 ｜ 邮箱：2664495537@qq.com
+</div>
+
+<div class="section-title">教育经历</div>
+<div class="edu-main">2021/09 ～ 至今 &nbsp;&nbsp; 南京农业大学 &nbsp;&nbsp; 信息管理与信息系统专业 &nbsp;&nbsp; 本科 &nbsp;&nbsp; 绩点：3.5</div>
+<div class="edu-sub">主修课程：C语言程序设计（90）、数据结构（89）、面向对象程序设计（84）、Python语言、数据库系统（92）、管理统计学、信息资源管理、科技文献检索、信息系统分析与设计</div>
+
+<div class="section-title">项目经历</div>
+
+<div class="proj-header">
+  <span class="proj-date">2025/03 ～ 至今</span> &nbsp; 法眼AI —— 智能法律案例分析系统 &nbsp; <span style="font-weight:400;color:#888;">（独立开发）</span>
+</div>
+<ul>
+  <li><b>项目概述：</b>基于大语言模型（LLM）与检索增强生成（RAG）技术的智能法律案例分析平台，面向公众提供民事/刑事案件的智能分析、类案检索与风险评估服务，涵盖案件自动分类、涉案金额提取、当事人识别、案件复杂度评估及律师转介建议等功能。项目已纳入 Git 版本管理并支持 Docker 容器化部署。</li>
+  <li><b>智能体开发：</b>设计并实现了基于规则引擎 + 关键词匹配的案件自动分类器，支持民事、刑事、刑民交叉三类自动判别；集成 MiniMax LLM 实现法律分析自动生成，内置禁止性用语检测引擎确保输出合规性。</li>
+  <li><b>RAG 检索系统：</b>搭建双库检索架构（民事+刑事），采用 TF-IDF + BM25 混合检索策略，结合 jieba 中文分词与 scikit-learn 实现相似案例精准召回；集成 LangChain + FAISS 向量存储，可扩展至大规模知识库。</li>
+  <li><b>大数据处理与可视化：</b>处理 10,000+ 条裁判文书数据，进行数据清洗与结构化提取（案由、裁判要点、法条、关键词等）；基于 ECharts 构建交互式数据看板，实现案件类别分布、年份趋势、关键词词云等多维度可视化分析。</li>
+  <li><b>全栈应用与工程化：</b>后端采用 Flask + Node.js 双架构，前端使用原生 HTML/CSS/JavaScript 响应式界面；编写 Dockerfile + docker-compose.yml 实现一键容器化部署；使用 Git 进行版本控制。</li>
+  <li><b>技术栈：</b>Python（Flask、LangChain、scikit-learn、jieba、NumPy、Pandas）、Node.js、HTML/CSS/JavaScript、ECharts、MiniMax API、FAISS、BM25、Docker、Git。</li>
+</ul>
+
+<div class="section-title">科研实践经历</div>
+
+<div class="proj-header">
+  <span class="proj-date">2024/10 ～ 至今</span> &nbsp; 图书馆智能服务的调研分析 &nbsp; <span style="font-weight:400;color:#888;">（毕业设计）</span>
+</div>
+<ul>
+  <li>以国家图书馆、首都图书馆、上海图书馆、北京大学图书馆和清华大学图书馆为对象，利用 Python 爬虫系统收集图书馆智能化案例（机器人服务、数字信息资源组织等），锻炼了网络信息搜集、数据加工与科研报告撰写能力。</li>
+</ul>
+
+<div class="proj-header">
+  <span class="proj-date">2022/04 ～ 2023/07</span> &nbsp; 校级大学生创新训练项目（SRT）&nbsp; <span style="font-weight:400;color:#888;">（组长）</span>
+</div>
+<ul>
+  <li>主持研究「生成式人工智能对大学生学习行为的影响研究」课题，构建5个评价指标，设计并发放调查问卷进行数据收集；使用 SPSS 27.0 进行统计分析，发现大学生使用 AI 频次对学习行为具有显著影响，培养了团队组织与数据分析能力。</li>
+</ul>
+
+<div class="section-title">专业技能</div>
+<p class="skill-line"><span class="skill-label">编程语言：</span>Python（熟练）、C/C++（熟悉）、JavaScript（了解）、R语言（了解）</p>
+<p class="skill-line"><span class="skill-label">数据分析：</span>SPSS（熟练）、NumPy / Pandas（熟练）、scikit-learn（熟悉）、SQL / MySQL（熟悉）、Matplotlib / ECharts（熟悉）</p>
+<p class="skill-line"><span class="skill-label">开发工具：</span>Flask、Node.js、LangChain、Git、Docker、VS Code、Jupyter Notebook</p>
+<p class="skill-line"><span class="skill-label">办公软件：</span>Excel（数据透视表/VLOOKUP）、Word、PowerPoint、LaTeX</p>
+<p class="skill-line"><span class="skill-label">语言能力：</span>CET-4 ≥ 550，CET-6 通过，英语口语六级 B 等，具备学术文献阅读与英文技术文档理解能力</p>
+
+<div class="section-title">自我评价</div>
+<p class="eval-text">
+做事认真负责，具备较强的自学能力与钻研精神。在法眼AI项目中，独立完成从需求分析、技术选型、系统设计到前后端开发、容器化部署的全流程工作，展现了良好的项目工程化能力与问题解决能力。具备团队协作经验（SRT项目组长），善于沟通与合作。对大数据分析、智能体开发与人工智能应用方向有浓厚兴趣，渴望在实习中进一步锻炼技术能力与业务理解。
+</p>
+
+<div class="footer-note">
+  —— 感谢您花时间阅读我的简历，期待有机会与您交流 ——
+</div>
+
+</body>
+</html>
