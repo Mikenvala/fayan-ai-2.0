@@ -1,4 +1,4 @@
-\begin{thebibliography}{3}
+\begin{thebibliography}{17}
 \providecommand{\natexlab}[1]{#1}
 \providecommand{\url}[1]{#1}
 \expandafter\ifx\csname urlstyle\endcsname\relax\else
@@ -23,10 +23,92 @@
   关于法律人工智能在中国运用前景的若干思考\allowbreak[J].
 \newblock 清华法学, 2018, 12\allowbreak (2): 108-124.
 
+\bibitem[程金华(2019)]{cheng2019}
+程金华.
+\newblock
+  迈向科学化的中国法学——大数据时代的法律实证研究\allowbreak[J].
+\newblock 中国法律评论, 2019\allowbreak (2): 56-72.
+
+\bibitem[Mullainathan et~al.(2017)Mullainathan and Spiess]{mullainathan2017}
+MULLAINATHAN S, SPIESS J.
+\newblock Machine learning: an applied econometric approach\allowbreak[J].
+\newblock Journal of Economic Perspectives, 2017, 31\allowbreak (2): 87-106.
+
+\bibitem[白建军(2017)]{bai2017}
+白建军.
+\newblock 法律实证研究方法\allowbreak[J].
+\newblock 法学研究, 2017, 39\allowbreak (4): 28-45.
+
+\bibitem[侯猛(2020)]{hou2020}
+侯猛.
+\newblock 司法过程中的社会科学思维\allowbreak[J].
+\newblock 中国法学, 2020\allowbreak (3): 185-204.
+
+\bibitem[{华宇元典法律人工智能研究院}(2019)]{huayu2019}
+{华宇元典法律人工智能研究院}.
+\newblock 让法律人读懂人工智能\allowbreak[M].
+\newblock 法律出版社, 2019.
+
+\bibitem[季卫东(2021)]{jiweidong2021}
+季卫东.
+\newblock 人工智能时代的法律议论\allowbreak[J].
+\newblock 中国法律评论, 2021\allowbreak (3): 1-18.
+
+\bibitem[陈瑞华(2015)]{chenruihua2015}
+陈瑞华.
+\newblock 法学研究中的实证方法\allowbreak[J].
+\newblock 法学, 2015\allowbreak (4): 15-28.
+
 \bibitem[Rosenbaum et~al.(1983)Rosenbaum and Rubin]{rosenbaum1983}
 ROSENBAUM P~R, RUBIN D~B.
 \newblock The central role of the propensity score in observational studies for
   causal effects\allowbreak[J].
 \newblock Biometrika, 1983, 70\allowbreak (1): 41-55.
+
+\bibitem[Robins et~al.(1994)Robins, Rotnitzky, and Zhao]{robins1994}
+ROBINS J~M, ROTNITZKY A, ZHAO L~P.
+\newblock Estimation of regression coefficients when some regressors are not
+  always observed\allowbreak[J].
+\newblock Journal of the American Statistical Association, 1994, 89\allowbreak
+  (427): 846-866.
+
+\bibitem[Angrist et~al.(1996)Angrist, Imbens, and Rubin]{angrist1996}
+ANGRIST J~D, IMBENS G~W, RUBIN D~B.
+\newblock Identification of causal effects using instrumental
+  variables\allowbreak[J].
+\newblock Journal of the American Statistical Association, 1996, 91\allowbreak
+  (434): 444-455.
+
+\bibitem[Wager et~al.(2018)Wager and Athey]{wager2018}
+WAGER S, ATHEY S.
+\newblock Estimation and inference of heterogeneous treatment effects using
+  random forests\allowbreak[J].
+\newblock Journal of the American Statistical Association, 2018, 113\allowbreak
+  (523): 1228-1242.
+
+\bibitem[Chernozhukov et~al.(2018)Chernozhukov, Chetverikov, Demirer, Duflo,
+  Hansen, Newey, and Robins]{chernozhukov2018}
+CHERNOZHUKOV V, CHETVERIKOV D, DEMIRER M, et~al.
+\newblock Double/Debiased machine learning for treatment and structural
+  parameters\allowbreak[J].
+\newblock The Econometrics Journal, 2018, 21\allowbreak (1): C1-C68.
+
+\bibitem[Athey et~al.(2019)Athey and Imbens]{athey2019}
+ATHEY S, IMBENS G~W.
+\newblock Machine learning methods that economists should know
+  about\allowbreak[J].
+\newblock Annual Review of Economics, 2019, 11: 685-725.
+
+\bibitem[Baron et~al.(1986)Baron and Kenny]{baron1986}
+BARON R~M, KENNY D~A.
+\newblock The moderator-mediator variable distinction in social psychological
+  research\allowbreak[J].
+\newblock Journal of Personality and Social Psychology, 1986, 51\allowbreak
+  (6): 1173-1182.
+
+\bibitem[Imai et~al.(2010)Imai, Keele, and Tingley]{imai2010}
+IMAI K, KEELE L, TINGLEY D.
+\newblock A general approach to causal mediation analysis\allowbreak[J].
+\newblock Psychological Methods, 2010, 15\allowbreak (4): 309-334.
 
 \end{thebibliography}
