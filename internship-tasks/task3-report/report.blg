@@ -1,0 +1,58 @@
+This is BibTeX, Version 0.99e (TeX Live 2026)
+Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
+The top-level auxiliary file: report.aux
+The style file: gbt7714-numerical.bst
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 150 items from 100.
+Reallocated wiz_functions (elt_size=4) to 6000 items from 3000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated wiz_functions (elt_size=4) to 9000 items from 6000.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Reallocated glb_str_ptr (elt_size=4) to 20 items from 10.
+Reallocated global_strs (elt_size=200001) to 20 items from 10.
+Reallocated glb_str_end (elt_size=4) to 20 items from 10.
+Reallocated singl_function (elt_size=4) to 100 items from 50.
+Database file #1: refs.bib
+You've used 3 entries,
+            6859 wiz_defined-function locations,
+            1243 strings with 9819 characters,
+and the built_in function-call counts, 10932 in all, are:
+= -- 770
+> -- 491
+< -- 1144
++ -- 380
+- -- 106
+* -- 116
+:= -- 1208
+add.period$ -- 9
+call.type$ -- 3
+change.case$ -- 5
+chr.to.int$ -- 607
+cite$ -- 3
+duplicate$ -- 856
+empty$ -- 176
+format.name$ -- 30
+if$ -- 2592
+int.to.chr$ -- 5
+int.to.str$ -- 4
+missing$ -- 0
+newline$ -- 29
+num.names$ -- 9
+pop$ -- 127
+preamble$ -- 1
+purify$ -- 5
+quote$ -- 0
+skip$ -- 690
+stack$ -- 0
+substring$ -- 1002
+swap$ -- 374
+text.length$ -- 34
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 29
+warning$ -- 0
+while$ -- 72
+width$ -- 0
+write$ -- 55
