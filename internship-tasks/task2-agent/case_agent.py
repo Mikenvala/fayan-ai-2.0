@@ -36,6 +36,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 # 配置
 # ============================================================
 CSV_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "all_cases_perfect.csv")
+INDEX_CACHE_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".cache")
 TOP_K = 3
 MAX_CASE_DISPLAY_CHARS = 250
 
@@ -131,12 +132,13 @@ class CaseRetriever:
 
         # TF-IDF
         self.tfidf_vec = TfidfVectorizer(
-            tokenizer=jieba_tokenizer, max_features=5000,
-            token_pattern=None, ngram_range=(1, 2)
+            tokenizer=jieba_tokenizer, max_features=2000,
+            token_pattern=None, ngram_range=(1, 1)
         )
+        print("   TF-IDF构建中...")
         self.tfidf_matrix = self.tfidf_vec.fit_transform(corpus)
 
-        print(f"   索引构建完成: BM25 + TF-IDF({self.tfidf_matrix.shape[1]}维)")
+        print(f"   ✅ 索引就绪: BM25 + TF-IDF({self.tfidf_matrix.shape[1]}维, {self.tfidf_matrix.shape[0]}条)")
 
     def search(self, query: str, top_k: int = TOP_K) -> list[dict]:
         """BM25 + TF-IDF 混合检索，返回 Top-K 案例"""
