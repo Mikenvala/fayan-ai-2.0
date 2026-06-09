@@ -23,9 +23,10 @@
   关于法律人工智能在中国运用前景的若干思考\allowbreak[J].
 \newblock 清华法学, 2018, 12\allowbreak (2): 108-124.
 
-\bibitem[{华宇元典法律人工智能研究院}(2019)]{huayu2019}
-{华宇元典法律人工智能研究院}.
-\newblock 让法律人读懂人工智能\allowbreak[M].
-\newblock 法律出版社, 2019.
+\bibitem[Rosenbaum et~al.(1983)Rosenbaum and Rubin]{rosenbaum1983}
+ROSENBAUM P~R, RUBIN D~B.
+\newblock The central role of the propensity score in observational studies for
+  causal effects\allowbreak[J].
+\newblock Biometrika, 1983, 70\allowbreak (1): 41-55.
 
 \end{thebibliography}
