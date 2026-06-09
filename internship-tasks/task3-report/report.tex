@@ -249,8 +249,8 @@ Robins等\cite{robins1994}发展的逆概率加权方法、Angrist等\cite{angri
     & 年份偏量 & 判决年份$-$2014 \\
 \midrule
 \multirow{2}{*}{中介变量} 
-    & 争议复杂度（$M_1$）& 判别标准篇幅（对数） \\
-    & 概念丰富度（$M_2$）& 关键词数量 \\
+    & 争议复杂度（M1）& 判别标准篇幅（对数） \\
+    & 概念丰富度（M2）& 关键词数量 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -277,8 +277,8 @@ Double ML框架\cite{chernozhukov2018}，以GradientBoosting为第一阶段
 \textbf{第四层——机制解释。}运用Baron-Kenny三步法\cite{baron1986}+
 1,000次Bootstrap\footnote{需注意，Baron-Kenny方法在因果中介分析中
 存在局限（Imai et al., 2010）。本文将其作为探索性机制分析使用，
-结果解读保持审慎。}检验两个候选中介变量：争议复杂度（$M_1$=判别标准
-篇幅对数）和概念丰富度（$M_2$=关键词数量）。中介效应占比$=a\times b / c$。
+结果解读保持审慎。}检验两个候选中介变量：争议复杂度（M1=判别标准
+篇幅对数）和概念丰富度（M2=关键词数量）。中介效应占比$=a\times b / c$。
 
 \subsection{补充分析}
 
@@ -478,10 +478,10 @@ CATE范围[$-$6.08, +8.02]pp，SD=2.07pp。10.9\%的样本具有统计显著的
 （\tabref{mediation}）表明：
 
 \begin{itemize}[leftmargin=*]
-    \item $M_1$（争议复杂度）= 判别标准篇幅对数：间接效应$a\times b=
+    \item M1（争议复杂度）= 判别标准篇幅对数：间接效应$a\times b=
     +0.41$pp，中介占比7.4\%，Bootstrap 95\%CI [0.22, 0.61]pp，不跨零
     ——\textbf{显著}。
-    \item $M_2$（概念丰富度）= 关键词数量：间接效应$\approx 0$pp，不显著。
+    \item M2（概念丰富度）= 关键词数量：间接效应$\approx 0$pp，不显著。
 \end{itemize}
 
 \begin{table}[H]\centering\caption{因果中介分析结果}

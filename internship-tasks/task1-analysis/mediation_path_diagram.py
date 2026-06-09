@@ -62,16 +62,16 @@ def box_edge(center, direction):
 ARROWS = [
     # a1: T → M1
     ('a', box_edge(BOX_T, 'tr'), box_edge(BOX_M1, 'left'),
-     f"a₁ = {p['a1']:+.4f}***", RED, 2.8),
+     f"a1 = {p['a1']:+.4f}***", RED, 2.8),
     # a2: T → M2
     ('b', box_edge(BOX_T, 'br'), box_edge(BOX_M2, 'left'),
-     f"a₂ ≈ 0 (n.s.)", GRAY, 2.0),
+     f"a2 ≈ 0 (n.s.)", GRAY, 2.0),
     # b1: M1 → Y
     ('c', box_edge(BOX_M1, 'right'), box_edge(BOX_Y, 'tl'),
-     f"b₁ = {p['b1']*100:+.2f}pp***", RED, 2.8),
+     f"b1 = {p['b1']*100:+.2f}pp***", RED, 2.8),
     # b2: M2 → Y
     ('d', box_edge(BOX_M2, 'right'), box_edge(BOX_Y, 'bl'),
-     f"b₂ = {p['b2']*100:+.2f}pp***", RED, 2.8),
+     f"b2 = {p['b2']*100:+.2f}pp***", RED, 2.8),
     # c': T → Y 直接效应（虚线）
     ('e', box_edge(BOX_T, 'right'), box_edge(BOX_Y, 'left'),
      f"c' = {p['c_prime']*100:+.2f}pp\n(PSM匹配后不显著)", GRAY, 2.5),
@@ -93,8 +93,8 @@ ax.axis('off')
 # ── 画四个变量盒 ──
 boxes = [
     (BOX_T,  '提及涉案金额\n(处理变量T)',  '#FEF2F2', RED),
-    (BOX_M1, '争议复杂度 M₁\n判别标准篇幅(log)', '#FFF7ED', '#EA580C'),
-    (BOX_M2, '概念丰富度 M₂\n关键词数量', '#FFF7ED', '#EA580C'),
+    (BOX_M1, '争议复杂度 M1\n判别标准篇幅(log)', '#FFF7ED', '#EA580C'),
+    (BOX_M2, '概念丰富度 M2\n关键词数量', '#FFF7ED', '#EA580C'),
     (BOX_Y,  '驳回判决\n(结果变量Y)', '#ECFDF5', GREEN),
 ]
 for (cx, cy), text, fc, ec in boxes:
@@ -139,9 +139,9 @@ for _, start, end, label, color, lw in ARROWS:
     # 标签位置: 箭头中点上方（垂直于箭头方向偏移）
     mx, my = mid_vec(start, end, offset_angle=90, offset_dist=0.55)
     # 对特定箭头微调
-    if 'a₂' in label:   mx, my = mid_vec(start, end, 90, 0.35)
-    if 'b₁' in label:   mx, my = mid_vec(start, end, 90, 0.50)
-    if 'b₂' in label:   mx, my = mid_vec(start, end, -90, 0.50)
+    if 'a2' in label:   mx, my = mid_vec(start, end, 90, 0.35)
+    if 'b1' in label:   mx, my = mid_vec(start, end, 90, 0.50)
+    if 'b2' in label:   mx, my = mid_vec(start, end, -90, 0.50)
     if "c'" in label:   mx, my = (BOX_T[0] + BOX_Y[0]) / 2, 4.5 + 0.9
     
     ax.text(mx, my, label, ha='center', va='center', fontsize=10,
@@ -160,7 +160,7 @@ ax.annotate('', xy=arc_end, xytext=arc_start,
 ix = (arc_start[0] + arc_end[0]) / 2 - 0.5
 iy = max(arc_start[1], arc_end[1]) + 1.3
 ax.text(ix, iy,
-        f"间接效应 a₁×b₁ = {p['ind1']*100:+.3f}pp ***\n"
+        f"间接效应 a1×b1 = {p['ind1']*100:+.3f}pp ***\n"
         f"中介占比 7.4%\n"
         f"95%CI [{p['ind1_lo']*100:+.3f}, {p['ind1_hi']*100:+.3f}]pp",
         ha='center', va='center', fontsize=10, fontweight='bold', color=GREEN,
@@ -180,7 +180,7 @@ ax.text(tx, ty,
 # ── 图例 ──
 leg_items = [
     mpatches.Patch(color='#FEF2F2', label='处理变量 (T)'),
-    mpatches.Patch(color='#FFF7ED', label='中介变量 (M₁, M₂)'),
+    mpatches.Patch(color='#FFF7ED', label='中介变量 (M1, M2)'),
     mpatches.Patch(color='#ECFDF5', label='结果变量 (Y)'),
     plt.Line2D([0],[0], color=RED, lw=2.5, label='*** p<0.001'),
     plt.Line2D([0],[0], color=GRAY, lw=2.0, linestyle='dashed', label='n.s. (不显著)'),
@@ -208,15 +208,15 @@ ax.axis('off')
 rows = [
     ['路径', '描述', '系数', '效应量(pp)', '95%CI', '显著性'],
     ['总效应 c',    'T → Y',                '—', f'{p["c"]*100:+.2f}',      '—', '***'],
-    ['直接效应 c\'', 'T → Y | M₁, M₂',       '—', f'{p["c_prime"]*100:+.2f}', '—', 'PSM后n.s.'],
-    ['a₁',          'T → M₁ (争议复杂度)',   f'{p["a1"]:+.4f}', '—', '—', '***'],
-    ['a₂',          'T → M₂ (概念丰富度)',   '≈0', '—', '—', 'n.s.'],
-    ['b₁',          'M₁ → Y | T',           f'{p["b1"]*100:+.3f}pp', '—', '—', '***'],
-    ['b₂',          'M₂ → Y | T',           f'{p["b2"]*100:+.3f}pp', '—', '—', '***'],
-    ['间接 a₁×b₁',  'T→M₁→Y',               '—', f'{p["ind1"]*100:+.3f}',
+    ['直接效应 c\'', 'T → Y | M1, M2',       '—', f'{p["c_prime"]*100:+.2f}', '—', 'PSM后n.s.'],
+    ['a1',          'T → M1 (争议复杂度)',   f'{p["a1"]:+.4f}', '—', '—', '***'],
+    ['a2',          'T → M2 (概念丰富度)',   '≈0', '—', '—', 'n.s.'],
+    ['b1',          'M1 → Y | T',           f'{p["b1"]*100:+.3f}pp', '—', '—', '***'],
+    ['b2',          'M2 → Y | T',           f'{p["b2"]*100:+.3f}pp', '—', '—', '***'],
+    ['间接 a1×b1',  'T→M1→Y',               '—', f'{p["ind1"]*100:+.3f}',
      f'[{p["ind1_lo"]*100:+.3f}, {p["ind1_hi"]*100:+.3f}]', '***'],
-    ['间接 a₂×b₂',  'T→M₂→Y',               '—', '≈0', '—', 'n.s.'],
-    ['中介占比',     '(a₁×b₁)/c',            '—', '7.4%', '—', '—'],
+    ['间接 a2×b2',  'T→M2→Y',               '—', '≈0', '—', 'n.s.'],
+    ['中介占比',     '(a1×b1)/c',            '—', '7.4%', '—', '—'],
 ]
 
 tbl = ax.table(cellText=rows, cellLoc='center',
