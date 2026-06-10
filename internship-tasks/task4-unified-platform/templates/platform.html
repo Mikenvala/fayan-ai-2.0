@@ -244,11 +244,14 @@ body{
       <p style="color:var(--text-light);font-size:.85rem;margin-bottom:20px">
         报告包含：数据概览、案由分布、判决结果统计、高频关键词分析。基于 {total_cases} 条裁判文书数据。
       </p>
-      <button class="btn btn-primary" onclick="generateReport()">
-        📥 生成并下载报告
+      <button class="btn btn-primary" onclick="generateReport('html')">
+        📥 下载 HTML 报告
       </button>
-      <button class="btn btn-outline" style="margin-left:10px" onclick="generateReport(true)">
-        🖨️ 在线预览报告
+      <button class="btn btn-primary" style="background:#DC2626" onclick="generateReport('pdf')">
+        📕 下载 PDF 报告
+      </button>
+      <button class="btn btn-outline" style="margin-left:10px" onclick="generateReport('preview')">
+        🖨️ 在线预览
       </button>
       <div id="reportPreview" style="margin-top:20px"></div>
     </div>
@@ -576,16 +579,19 @@ function scrollChat() {
 // ============================================================
 // 报告生成
 // ============================================================
-async function generateReport(preview) {
+async function generateReport(format) {
   var title = document.getElementById('reportTitle').value || '法眼AI 案例分析报告';
+  var isPreview = (format === 'preview');
+  var fmt = isPreview ? 'html' : format;
+  
   try {
     var resp = await fetch('/api/report/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({title:title, chat_history: chatHistory})
+      body:JSON.stringify({title:title, chat_history: chatHistory, format: fmt})
     });
 
-    if (preview) {
+    if (isPreview) {
       var text = await resp.text();
       document.getElementById('reportPreview').innerHTML =
         '<iframe srcdoc="'+text.replace(/"/g,'&quot;').replace(/\n/g,' ')+
@@ -595,7 +601,7 @@ async function generateReport(preview) {
       var url = URL.createObjectURL(blob);
       var a = document.createElement('a');
       a.href = url;
-      a.download = title.replace(/\s/g,'_') + '.html';
+      a.download = title.replace(/\s/g,'_') + '.' + format;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -616,17 +622,18 @@ async function exportChatToReport() {
   }
   var title = '法眼AI 法律咨询报告';
   try {
+    // 默认导出 PDF
     var resp = await fetch('/api/report/generate', {
       method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({title:title, chat_history: chatHistory})
+      body:JSON.stringify({title:title, chat_history: chatHistory, format: 'pdf'})
     });
     if (!resp.ok) throw new Error('生成失败');
     var blob = await resp.blob();
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url;
-    a.download = title.replace(/\s/g,'_') + '.html';
+    a.download = title.replace(/\s/g,'_') + '.pdf';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

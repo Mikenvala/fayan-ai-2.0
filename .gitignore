@@ -36,3 +36,13 @@ node_modules/
 # Output
 *.pdf
 *.png
+
+# Task4 cache
+internship-tasks/task4-unified-platform/.cache/
+
+# Logs
+*.log
+/tmp/
+
+# Screenshots
+/tmp/

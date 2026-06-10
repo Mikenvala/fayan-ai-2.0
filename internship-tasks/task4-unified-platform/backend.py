@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, HTMLResponse
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, HTMLResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -97,6 +97,7 @@ class ChatResponse(BaseModel):
 class ReportRequest(BaseModel):
     title: Optional[str] = "法眼AI 案例分析报告"
     chat_history: Optional[List[dict]] = []
+    format: Optional[str] = "html"  # html or pdf
     queries: Optional[List[str]] = []
 
 # ============================================================
@@ -203,7 +204,8 @@ async def agent_chat_stream(req: ChatRequest):
 # ============================================================
 @app.post("/api/report/generate")
 async def generate_report(req: ReportRequest):
-    """生成分析报告（HTML格式，含对话总结和AI结论）"""
+    """生成分析报告（HTML/PDF格式，含完整对话总结和AI结论）"""
+    import subprocess, tempfile, os
     total = dashboard_cache['overview']['total_cases']
 
     # 构建对话摘要
@@ -212,7 +214,7 @@ async def generate_report(req: ReportRequest):
         chat_section = '<div class="section"><h2>五、对话记录摘要</h2><table><tr><th>角色</th><th>内容</th></tr>'
         for msg in req.chat_history[-20:]:
             role = "👤 用户" if msg.get("role") == "user" else "🤖 AI"
-            text = str(msg.get("content", ""))[:300]
+            text = str(msg.get("content", ""))
             import re
             text = re.sub(r'<think>.*?</think>', '[推理已省略]', text, flags=re.DOTALL)
             text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
@@ -225,7 +227,7 @@ async def generate_report(req: ReportRequest):
         ai_msgs = [m for m in req.chat_history if m.get("role") == "assistant"]
         if ai_msgs:
             import re
-            last_ai = ai_msgs[-1].get("content", "")[:1000]
+            last_ai = ai_msgs[-1].get("content", "")
             last_ai = re.sub(r'<think>.*?</think>', '', last_ai, flags=re.DOTALL)
             last_ai = re.sub(r'---+.*$', '', last_ai, flags=re.DOTALL)
             last_ai = last_ai.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
@@ -319,8 +321,41 @@ tr:nth-child(even){{background:#fafafa}}
 </body>
 </html>"""
 
-    # HTMLResponse handles utf-8 properly
     import urllib.parse
+    
+    if req.format == "pdf":
+        # Use Chrome headless to convert HTML to PDF
+        try:
+            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                f.write(report_html)
+                html_path = f.name
+            pdf_path = html_path.replace('.html', '.pdf')
+            
+            chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+            result = subprocess.run([
+                chrome, '--headless', '--disable-gpu', '--no-sandbox',
+                '--print-to-pdf=' + pdf_path,
+                '--no-pdf-header-footer',
+                'file://' + html_path
+            ], capture_output=True, timeout=30)
+            
+            with open(pdf_path, 'rb') as f:
+                pdf_bytes = f.read()
+            
+            os.unlink(html_path)
+            os.unlink(pdf_path)
+            
+            filename = urllib.parse.quote(req.title + ".pdf")
+            return Response(
+                content=pdf_bytes,
+                media_type="application/pdf",
+                headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
+            )
+        except Exception as e:
+            # Fallback: return HTML with error note
+            report_html = f"<p style='color:red'>PDF生成失败({str(e)})，请下载HTML格式</p>" + report_html
+    
+    # Default: HTML
     filename = urllib.parse.quote(req.title + ".html")
     return HTMLResponse(
         content=report_html,
