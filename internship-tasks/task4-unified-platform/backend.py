@@ -217,7 +217,7 @@ async def generate_report(req: ReportRequest):
 
     chat_section = ""
     if req.chat_history:
-        chat_section = '<div class="section"><h2>五、对话记录摘要</h2>'
+        chat_section = '<div class="section"><h2>五、咨询对话与AI分析</h2>'
         for msg in req.chat_history[-20:]:
             role_class = "user-msg" if msg.get("role") == "user" else "ai-msg"
             role_label = "👤 用户" if msg.get("role") == "user" else "🤖 AI"
@@ -234,16 +234,7 @@ async def generate_report(req: ReportRequest):
             chat_section += f'<div class="chat-item {role_class}"><div class="chat-role">{role_label}</div><div class="chat-content md-content">{text_safe}</div></div>'
         chat_section += "</div>"
 
-    ai_summary = ""
-    if req.chat_history:
-        ai_msgs = [m for m in req.chat_history if m.get("role") == "assistant"]
-        if ai_msgs:
-            last_ai = ai_msgs[-1].get("content", "")
-            last_ai = _re.sub(r'<think>.*?</think>', '', last_ai, flags=_re.DOTALL)
-            last_ai = _re.sub(r'---+.*$', '', last_ai, flags=_re.DOTALL)
-            last_ai = esc_html(last_ai).replace('\n', '<br>')
-            last_ai_safe = last_ai.replace('{', '{{').replace('}', '}}')
-            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="ai-conclusion md-content">{last_ai_safe}</div></div>'
+    ai_summary = ""  # 已整合到对话摘要中，不再单独显示
 
     report_html = f"""<!DOCTYPE html>
 <html lang="zh-CN">

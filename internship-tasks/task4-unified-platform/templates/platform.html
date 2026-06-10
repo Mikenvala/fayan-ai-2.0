@@ -767,7 +767,6 @@ function handleSSE(event, msgId) {
   if (event.event === 'retrieve') {
     if (event.data.status === 'done') {
       if (stepEl) { stepEl.className = 'progress-step done'; }
-      // 更新侧边栏案例
       var cases = event.data.cases || [];
       document.getElementById('retrievedCases').innerHTML = cases.length > 0
         ? cases.map(c => '<div class="case-item">' +
@@ -776,10 +775,12 @@ function handleSSE(event, msgId) {
             '<div class="case-desc">'+(c.desc||'').substring(0,80)+'</div>' +
             '</div>').join('')
         : '<div style="color:var(--text-light)">无匹配案例</div>';
+      // 立即更新链路
+      document.getElementById('agentTrace').innerHTML = 
+        '<span style="color:#7F1D1D;font-weight:600">🔗 intent → retriever('+cases.length+' cases)</span>';
     } else if (event.data.status === 'skipped') {
       if (stepEl) { stepEl.innerHTML = '<span class="step-icon">⏭️</span>跳过'; stepEl.className = 'progress-step done'; }
     }
-    // Activate analyze step
     var analyzeEl = document.getElementById('step-analyze');
     if (analyzeEl && event.data.status !== 'skipped') { analyzeEl.className = 'progress-step active'; }
   }
@@ -795,6 +796,9 @@ function handleSSE(event, msgId) {
       if (stepEl) { stepEl.className = 'progress-step active'; }
     } else if (event.data.status === 'done') {
       if (stepEl) { stepEl.className = 'progress-step done'; }
+      // 更新链路到分析完成
+      document.getElementById('agentTrace').innerHTML = 
+        '<span style="color:#7F1D1D;font-weight:600">🔗 intent → retriever → analyst ✓</span>';
       var verEl = document.getElementById('step-verify');
       if (verEl) { verEl.className = 'progress-step active'; }
     }
