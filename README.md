@@ -6,9 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-基于 **LangGraph 多Agent协作 + FastAPI + ECharts + MiniMax LLM** 的智能法律案例分析平台，覆盖大数据分析、智能体开发、智能应用、学术报告四大模块。
-
-![Dashboard](internship-tasks/task4-unified-platform/screenshots/dashboard.png)
+**LangGraph 多Agent协作 + FastAPI + ECharts + MiniMax LLM** | 大数据分析 · 智能体开发 · 智能应用 · 学术报告
 
 ---
 
