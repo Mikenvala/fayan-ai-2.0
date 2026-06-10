@@ -204,7 +204,7 @@ async def agent_chat_stream(req: ChatRequest):
 # ============================================================
 @app.post("/api/report/generate")
 async def generate_report(req: ReportRequest):
-    """生成分析报告（HTML/PDF，含Markdown渲染的完整对话）"""
+    """生成分析报告（HTML/PDF，专业排版）"""
     import subprocess, tempfile, os, re as _re
     total = dashboard_cache['overview']['total_cases']
 
@@ -212,35 +212,31 @@ async def generate_report(req: ReportRequest):
         return str(t).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     def process_think(t):
-        """将 <think> 转为可折叠块"""
         def repl(m):
             inner = esc_html(m.group(1)[:500])
             return ('<span class="think-toggle" onclick="var n=this.nextElementSibling;'
-                    'n.style.display=n.style.display==\'block\'?\'none\':\'block\'">'
+                    'n.style.display=n.style.display===\'block\'?\'none\':\'block\'">'
                     '💭 推理过程</span><div class="think-block">' + inner + '</div>')
         return _re.sub(r'<think>(.*?)</think>', repl, t, flags=_re.DOTALL)
 
-    # 构建对话摘要
     chat_section = ""
     if req.chat_history:
-        chat_section = '<div class="section"><h2>五、对话记录摘要</h2><table><tr><th style="width:60px">角色</th><th>内容</th></tr>'
+        chat_section = '<div class="section"><h2>五、对话记录摘要</h2>'
         for msg in req.chat_history[-20:]:
-            role = "👤 用户" if msg.get("role") == "user" else "🤖 AI"
+            role_class = "user-msg" if msg.get("role") == "user" else "ai-msg"
+            role_label = "👤 用户" if msg.get("role") == "user" else "🤖 AI"
             text = str(msg.get("content", ""))
             text = process_think(text)
-            # Escape HTML for safe embedding
             text = esc_html(text)
-            # Restore our think-block HTML tags
             text = text.replace('&amp;lt;span class=&amp;quot;think-toggle', '<span class="think-toggle')
             text = text.replace('&amp;lt;div class=&amp;quot;think-block', '<div class="think-block')
             text = text.replace('&amp;lt;/span&amp;gt;', '</span>')
             text = text.replace('&amp;lt;/div&amp;gt;', '</div>')
             text = text.replace('&amp;quot;', '"')
             text = text.replace('\n', '<br>')
-            chat_section += f'<tr><td style="width:60px;vertical-align:top;font-weight:600">{role}</td><td><div class="md-content">{text}</div></td></tr>'
-        chat_section += "</table></div>"
+            chat_section += f'<div class="chat-item {role_class}"><div class="chat-role">{role_label}</div><div class="chat-content md-content">{text}</div></div>'
+        chat_section += "</div>"
 
-    # AI 分析结论
     ai_summary = ""
     if req.chat_history:
         ai_msgs = [m for m in req.chat_history if m.get("role") == "assistant"]
@@ -249,9 +245,8 @@ async def generate_report(req: ReportRequest):
             last_ai = _re.sub(r'<think>.*?</think>', '', last_ai, flags=_re.DOTALL)
             last_ai = _re.sub(r'---+.*$', '', last_ai, flags=_re.DOTALL)
             last_ai = esc_html(last_ai).replace('\n', '<br>')
-            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="summary-box md-content">{last_ai}</div></div>'
+            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="ai-conclusion md-content">{last_ai}</div></div>'
 
-    # 生成 HTML
     report_html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -259,50 +254,113 @@ async def generate_report(req: ReportRequest):
 <title>{req.title}</title>
 <script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 <style>
-body{{font-family:"PingFang SC","Microsoft YaHei",sans-serif;max-width:900px;margin:40px auto;padding:20px;color:#333;line-height:1.8}}
-h1{{text-align:center;color:#7F1D1D;border-bottom:2px solid #7F1D1D;padding-bottom:10px}}
-h2{{color:#5B0E0E;margin-top:30px;border-left:4px solid #7F1D1D;padding-left:10px}}
-.section{{margin:20px 0}}
-table{{width:100%;border-collapse:collapse;margin:15px 0;font-size:.9rem}}
-th,td{{border:1px solid #ddd;padding:8px 12px;text-align:left}}
-th{{background:#7F1D1D;color:#fff;font-weight:600}}
-tr:nth-child(even){{background:#fafafa}}
-.stats{{display:flex;gap:20px;flex-wrap:wrap;margin:20px 0}}
-.stat-box{{flex:1;min-width:150px;background:#FEF2F2;border-radius:10px;padding:20px;text-align:center}}
-.stat-box .num{{font-size:2rem;color:#7F1D1D;font-weight:700}}
-.stat-box .label{{color:#666;margin-top:5px}}
-.footer{{margin-top:40px;text-align:center;color:#999;font-size:.85rem;border-top:1px solid #eee;padding-top:20px}}
-.meta{{text-align:center;color:#666;font-size:.85rem;margin-bottom:20px}}
-.summary-box{{background:#FEF2F2;padding:20px;border-radius:8px;border-left:4px solid #7F1D1D;line-height:1.9}}
-/* Markdown rendering */
-.md-content h2{{font-size:1.1rem;color:#7F1D1D;border-bottom:1px solid #FCA5A5;padding-bottom:4px;margin:12px 0 6px}}
-.md-content h3{{font-size:1rem;color:#5B0E0E;margin:10px 0 4px}}
-.md-content table{{width:100%;border-collapse:collapse;margin:8px 0;font-size:.85rem}}
-.md-content th,.md-content td{{border:1px solid #ddd;padding:6px 10px;text-align:left}}
-.md-content th{{background:#FEF2F2;font-weight:600}}
-.md-content blockquote{{border-left:3px solid #7F1D1D;margin:6px 0;padding:4px 12px;background:#FFF5F5;border-radius:0 4px 4px 0}}
-.md-content code{{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:.85rem}}
-.md-content pre{{background:#f8f8f8;padding:12px;border-radius:6px;overflow-x:auto;font-size:.82rem;border:1px solid #eee}}
-.md-content ul,.md-content ol{{padding-left:20px;margin:4px 0}}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+*{{margin:0;padding:0;box-sizing:border-box}}
+body{{
+  font-family:'Inter','PingFang SC','Microsoft YaHei',-apple-system,sans-serif;
+  background:#f8f9fa;color:#1a1a2e;line-height:1.8;padding:0
+}}
+.cover{{
+  background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);
+  color:#fff;padding:60px 40px;text-align:center;position:relative;overflow:hidden
+}}
+.cover::before{{
+  content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;
+  background:radial-gradient(circle,rgba(255,255,255,0.03) 0%,transparent 70%);
+  animation:coverShine 8s linear infinite
+}}
+@keyframes coverShine{{0%{{transform:rotate(0deg)}}100%{{transform:rotate(360deg)}}}}
+.cover h1{{font-size:2rem;font-weight:700;letter-spacing:2px;margin-bottom:8px;position:relative;z-index:1}}
+.cover .subtitle{{font-size:.9rem;opacity:.7;position:relative;z-index:1}}
+.container{{max-width:860px;margin:0 auto;padding:32px 24px}}
+h2{{
+  font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;
+  padding-left:14px;border-left:4px solid #e94560;line-height:1.4
+}}
+.stats-row{{display:flex;gap:16px;flex-wrap:wrap;margin:16px 0}}
+.stat-card{{
+  flex:1;min-width:140px;background:#fff;border-radius:12px;padding:24px 20px;
+  text-align:center;box-shadow:0 2px 12px rgba(0,0,0,.04);border:1px solid #f0f0f0;
+  transition:transform .2s,box-shadow .2s
+}}
+.stat-card:hover{{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,.08)}}
+.stat-card .num{{font-size:2rem;font-weight:700;color:#e94560}}
+.stat-card .label{{font-size:.8rem;color:#666;margin-top:4px;text-transform:uppercase;letter-spacing:1px}}
+table{{
+  width:100%;border-collapse:separate;border-spacing:0;margin:16px 0;
+  border-radius:12px;overflow:hidden;box-shadow:0 2px 12px rgba(0,0,0,.04)
+}}
+th{{
+  background:#1a1a2e;color:#fff;font-weight:600;font-size:.82rem;
+  padding:12px 16px;text-align:left;text-transform:uppercase;letter-spacing:.5px
+}}
+td{{padding:10px 16px;font-size:.88rem;border-bottom:1px solid #f0f0f0;background:#fff}}
+tr:last-child td{{border-bottom:none}}
+tr:hover td{{background:#f8f9fa}}
+/* Chat items */
+.chat-item{{margin:16px 0;display:flex;gap:12px;align-items:flex-start}}
+.chat-item.user-msg{{flex-direction:row-reverse}}
+.chat-role{{
+  font-size:.75rem;font-weight:700;padding:4px 12px;border-radius:20px;
+  white-space:nowrap;flex-shrink:0
+}}
+.user-msg .chat-role{{background:#e94560;color:#fff}}
+.ai-msg .chat-role{{background:#0f3460;color:#fff}}
+.chat-content{{
+  background:#fff;border-radius:12px;padding:14px 18px;max-width:700px;
+  box-shadow:0 2px 8px rgba(0,0,0,.04);line-height:1.7;font-size:.88rem
+}}
+.ai-msg .chat-content{{border-top-left-radius:4px}}
+.user-msg .chat-content{{border-top-right-radius:4px;background:#f0f4ff}}
+/* AI conclusion */
+.ai-conclusion{{
+  background:linear-gradient(135deg,#fff 0%,#f8f9ff 100%);
+  border:1px solid #e8ecf4;border-radius:16px;padding:24px 28px;
+  line-height:1.9;box-shadow:0 4px 20px rgba(0,0,0,.04)
+}}
+/* Markdown */
+.md-content h1,.md-content h2{{font-size:1.05rem;color:#0f3460;margin:10px 0 6px}}
+.md-content h3{{font-size:.95rem;color:#1a1a2e;margin:8px 0 4px}}
+.md-content table{{width:100%;border-collapse:collapse;margin:8px 0;font-size:.82rem;box-shadow:none}}
+.md-content th{{background:#1a1a2e;color:#fff;padding:8px 12px;font-size:.78rem}}
+.md-content td{{padding:6px 12px;border-bottom:1px solid #eee;font-size:.8rem}}
+.md-content blockquote{{border-left:3px solid #e94560;margin:8px 0;padding:4px 14px;background:#fff5f5;border-radius:0 8px 8px 0}}
+.md-content code{{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:.82rem;font-family:'SF Mono',monospace}}
+.md-content pre{{background:#1a1a2e;color:#e0e0e0;padding:16px;border-radius:10px;overflow-x:auto;font-size:.8rem;line-height:1.5}}
+.md-content strong{{color:#0f3460}}
+.md-content ul,.md-content ol{{padding-left:20px;margin:6px 0}}
 .md-content p{{margin:5px 0}}
-.md-content hr{{border:none;border-top:1px solid #ddd;margin:12px 0}}
-.md-content strong{{color:#333}}
-.think-block{{background:#f9fafb;border:1px dashed #d1d5db;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:.82rem;color:#6b7280;display:none;max-height:120px;overflow-y:auto}}
-.think-toggle{{cursor:pointer;color:#7F1D1D;font-size:.78rem;font-weight:600;user-select:none}}
-.think-toggle:hover{{text-decoration:underline}}
+/* Think */
+.think-block{{background:#f8f9fa;border:1px dashed #ccc;border-radius:8px;padding:10px 14px;margin:8px 0;font-size:.8rem;color:#888;display:none;max-height:120px;overflow-y:auto}}
+.think-toggle{{cursor:pointer;color:#999;font-size:.76rem;font-weight:600;display:inline-block;margin:4px 0}}
+.think-toggle:hover{{color:#e94560}}
+/* Footer */
+.footer{{
+  margin-top:48px;padding:24px;text-align:center;color:#999;font-size:.78rem;
+  border-top:1px solid #eee;background:#fff;border-radius:16px
+}}
+@media print{{
+  body{{background:#fff}}
+  .cover{{background:#1a1a2e!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}
+}}
 </style>
 </head>
 <body>
-<h1>⚖️ {req.title}</h1>
-<p class="meta">生成时间: {time.strftime("%Y-%m-%d %H:%M:%S")} | 数据来源: 法眼AI 裁判文书库 | 共 {total:,} 条</p>
+
+<div class="cover">
+  <h1>⚖️ {req.title}</h1>
+  <div class="subtitle">生成时间: {time.strftime("%Y-%m-%d %H:%M:%S")} · 数据来源: 法眼AI 裁判文书库 · {total:,} 条</div>
+</div>
+
+<div class="container">
 
 <div class="section">
 <h2>一、数据概览</h2>
-<div class="stats">
-<div class="stat-box"><div class="num">{total:,}</div><div class="label">案例总数</div></div>
-<div class="stat-box"><div class="num">{dashboard_cache['overview']['civil_count']:,}</div><div class="label">民事案件</div></div>
-<div class="stat-box"><div class="num">{dashboard_cache['overview']['criminal_count']:,}</div><div class="label">刑事案件</div></div>
-<div class="stat-box"><div class="num">{dashboard_cache['overview']['case_types_count']}</div><div class="label">案由类型</div></div>
+<div class="stats-row">
+<div class="stat-card"><div class="num">{total:,}</div><div class="label">案例总数</div></div>
+<div class="stat-card"><div class="num">{dashboard_cache['overview']['civil_count']:,}</div><div class="label">民事案件</div></div>
+<div class="stat-card"><div class="num">{dashboard_cache['overview']['criminal_count']:,}</div><div class="label">刑事案件</div></div>
+<div class="stat-card"><div class="num">{dashboard_cache['overview']['case_types_count']}</div><div class="label">案由类型</div></div>
 </div>
 </div>
 
@@ -350,13 +408,15 @@ tr:nth-child(even){{background:#fafafa}}
 {ai_summary}
 
 <div class="footer">
-<p>⚖️ 法眼AI 2.0 · 智能法律案例分析系统 | 报告自动生成</p>
-<p>本报告基于 {total:,} 条裁判文书数据自动生成 | GitHub: Mikenvala/fayan-ai-2.0</p>
+  <p>⚖️ 法眼AI 2.0 · 智能法律案例分析系统</p>
+  <p style="margin-top:4px">本报告基于 {total:,} 条裁判文书数据自动生成 · GitHub: Mikenvala/fayan-ai-2.0</p>
 </div>
+
+</div>
+
 <script>
-// Markdown 自动渲染
 if(typeof marked !== 'undefined') {{
-  marked.setOptions({{breaks: true, gfm: true}});
+  marked.setOptions({{breaks:true,gfm:true}});
   document.querySelectorAll('.md-content').forEach(function(el) {{
     var raw = el.textContent || el.innerText || '';
     try {{ el.innerHTML = marked.parse(raw); }} catch(e) {{}}
@@ -374,35 +434,22 @@ if(typeof marked !== 'undefined') {{
                 f.write(report_html)
                 html_path = f.name
             pdf_path = html_path.replace('.html', '.pdf')
-            
             chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-            subprocess.run([
-                chrome, '--headless', '--disable-gpu', '--no-sandbox',
-                '--print-to-pdf=' + pdf_path,
-                '--no-pdf-header-footer',
-                'file://' + html_path
-            ], capture_output=True, timeout=30)
-            
+            subprocess.run([chrome,'--headless','--disable-gpu','--no-sandbox',
+                '--print-to-pdf='+pdf_path,'--no-pdf-header-footer',
+                'file://'+html_path], capture_output=True, timeout=30)
             with open(pdf_path, 'rb') as f:
                 pdf_bytes = f.read()
-            
-            os.unlink(html_path)
-            os.unlink(pdf_path)
-            
+            os.unlink(html_path); os.unlink(pdf_path)
             filename = urllib.parse.quote(req.title + ".pdf")
-            return Response(
-                content=pdf_bytes,
-                media_type="application/pdf",
-                headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
-            )
+            return Response(content=pdf_bytes, media_type="application/pdf",
+                headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"})
         except Exception as e:
-            report_html = f"<p style='color:red'>PDF生成失败({str(e)})，请下载HTML格式</p>" + report_html
-    
+            report_html = f"<p style='color:red'>PDF生成失败({e})</p>" + report_html
+
     filename = urllib.parse.quote(req.title + ".html")
-    return HTMLResponse(
-        content=report_html,
-        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
-    )
+    return HTMLResponse(content=report_html,
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"})
 
 
 # 案例搜索 API（供前端快速预览）
