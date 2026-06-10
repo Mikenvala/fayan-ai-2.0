@@ -20,7 +20,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, StreamingResponse, HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -96,6 +96,7 @@ class ChatResponse(BaseModel):
 
 class ReportRequest(BaseModel):
     title: Optional[str] = "法眼AI 案例分析报告"
+    chat_history: Optional[List[dict]] = []
     queries: Optional[List[str]] = []
 
 # ============================================================
@@ -196,10 +197,41 @@ async def agent_chat_stream(req: ChatRequest):
 
 # ============================================================
 # 报告生成 API
+
+# ============================================================
+# 报告生成 API
 # ============================================================
 @app.post("/api/report/generate")
 async def generate_report(req: ReportRequest):
-    """生成分析报告（HTML格式）"""
+    """生成分析报告（HTML格式，含对话总结和AI结论）"""
+    total = dashboard_cache['overview']['total_cases']
+
+    # 构建对话摘要
+    chat_section = ""
+    if req.chat_history:
+        chat_section = '<div class="section"><h2>五、对话记录摘要</h2><table><tr><th>角色</th><th>内容</th></tr>'
+        for msg in req.chat_history[-20:]:
+            role = "👤 用户" if msg.get("role") == "user" else "🤖 AI"
+            text = str(msg.get("content", ""))[:300]
+            import re
+            text = re.sub(r'<think>.*?</think>', '[推理已省略]', text, flags=re.DOTALL)
+            text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+            chat_section += f"<tr><td>{role}</td><td>{text}</td></tr>"
+        chat_section += "</table></div>"
+
+    # AI 分析结论
+    ai_summary = ""
+    if req.chat_history:
+        ai_msgs = [m for m in req.chat_history if m.get("role") == "assistant"]
+        if ai_msgs:
+            import re
+            last_ai = ai_msgs[-1].get("content", "")[:1000]
+            last_ai = re.sub(r'<think>.*?</think>', '', last_ai, flags=re.DOTALL)
+            last_ai = re.sub(r'---+.*$', '', last_ai, flags=re.DOTALL)
+            last_ai = last_ai.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
+            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="summary-box">{last_ai}</div></div>'
+
+    # 生成 HTML
     report_html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -208,26 +240,29 @@ async def generate_report(req: ReportRequest):
 <style>
 body{{font-family:"PingFang SC","Microsoft YaHei",sans-serif;max-width:900px;margin:40px auto;padding:20px;color:#333;line-height:1.8}}
 h1{{text-align:center;color:#7F1D1D;border-bottom:2px solid #7F1D1D;padding-bottom:10px}}
-h2{{color:#5B0E0E;margin-top:30px}}
+h2{{color:#5B0E0E;margin-top:30px;border-left:4px solid #7F1D1D;padding-left:10px}}
 .section{{margin:20px 0}}
-table{{width:100%;border-collapse:collapse;margin:15px 0}}
-th,td{{border:1px solid #ddd;padding:10px 12px;text-align:left}}
-th{{background:#7F1D1D;color:#fff}}
+table{{width:100%;border-collapse:collapse;margin:15px 0;font-size:.9rem}}
+th,td{{border:1px solid #ddd;padding:8px 12px;text-align:left}}
+th{{background:#7F1D1D;color:#fff;font-weight:600}}
+tr:nth-child(even){{background:#fafafa}}
 .stats{{display:flex;gap:20px;flex-wrap:wrap;margin:20px 0}}
 .stat-box{{flex:1;min-width:150px;background:#FEF2F2;border-radius:10px;padding:20px;text-align:center}}
 .stat-box .num{{font-size:2rem;color:#7F1D1D;font-weight:700}}
 .stat-box .label{{color:#666;margin-top:5px}}
 .footer{{margin-top:40px;text-align:center;color:#999;font-size:.85rem;border-top:1px solid #eee;padding-top:20px}}
+.meta{{text-align:center;color:#666;font-size:.85rem;margin-bottom:20px}}
+.summary-box{{background:#FEF2F2;padding:20px;border-radius:8px;border-left:4px solid #7F1D1D;line-height:1.9}}
 </style>
 </head>
 <body>
 <h1>⚖️ {req.title}</h1>
-<p style="text-align:center;color:#666">生成时间: {time.strftime("%Y-%m-%d %H:%M:%S")} | 数据来源: 法眼AI 裁判文书库</p>
+<p class="meta">生成时间: {time.strftime("%Y-%m-%d %H:%M:%S")} | 数据来源: 法眼AI 裁判文书库 | 共 {total:,} 条</p>
 
 <div class="section">
 <h2>一、数据概览</h2>
 <div class="stats">
-<div class="stat-box"><div class="num">{dashboard_cache['overview']['total_cases']:,}</div><div class="label">案例总数</div></div>
+<div class="stat-box"><div class="num">{total:,}</div><div class="label">案例总数</div></div>
 <div class="stat-box"><div class="num">{dashboard_cache['overview']['civil_count']:,}</div><div class="label">民事案件</div></div>
 <div class="stat-box"><div class="num">{dashboard_cache['overview']['criminal_count']:,}</div><div class="label">刑事案件</div></div>
 <div class="stat-box"><div class="num">{dashboard_cache['overview']['case_types_count']}</div><div class="label">案由类型</div></div>
@@ -241,7 +276,7 @@ th{{background:#7F1D1D;color:#fff}}
 """
     type_dist = dashboard_cache.get("case_type_dist", [])[:10]
     for i, item in enumerate(type_dist, 1):
-        pct = item["value"] / dashboard_cache["overview"]["total_cases"] * 100
+        pct = item["value"] / total * 100
         report_html += f"<tr><td>{i}</td><td>{item['name']}</td><td>{item['value']:,}</td><td>{pct:.1f}%</td></tr>\n"
 
     report_html += """
@@ -255,7 +290,7 @@ th{{background:#7F1D1D;color:#fff}}
 """
     jud_dist = dashboard_cache.get("judgment_dist", [])
     for item in jud_dist:
-        pct = item["value"] / dashboard_cache["overview"]["total_cases"] * 100
+        pct = item["value"] / total * 100
         report_html += f"<tr><td>{item['name']}</td><td>{item['value']:,}</td><td>{pct:.1f}%</td></tr>\n"
 
     report_html += f"""
@@ -274,22 +309,25 @@ th{{background:#7F1D1D;color:#fff}}
     report_html += f"""
 </table>
 </div>
+{chat_section}
+{ai_summary}
 
 <div class="footer">
-<p>法眼AI 2.0 · 智能法律案例分析系统 | 报告自动生成</p>
-<p>本报告基于 {dashboard_cache['overview']['total_cases']:,} 条裁判文书数据自动生成</p>
+<p>⚖️ 法眼AI 2.0 · 智能法律案例分析系统 | 报告自动生成</p>
+<p>本报告基于 {total:,} 条裁判文书数据自动生成 | GitHub: Mikenvala/fayan-ai-2.0</p>
 </div>
 </body>
 </html>"""
 
-    return Response(
+    # HTMLResponse handles utf-8 properly
+    import urllib.parse
+    filename = urllib.parse.quote(req.title + ".html")
+    return HTMLResponse(
         content=report_html,
-        media_type="text/html",
-        headers={"Content-Disposition": "attachment; filename=report.html"}
+        headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
     )
 
 
-# ============================================================
 # 案例搜索 API（供前端快速预览）
 # ============================================================
 @app.get("/api/search")
