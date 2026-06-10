@@ -309,7 +309,7 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
             text = _re.sub(r'<think>.*?</think>', '', text, flags=_re.DOTALL)
             # 不做 HTML 转义！保留原始 Markdown
             parts.append(f'<div class="chat-item {role_class}"><div class="chat-role">{role_label}</div><div class="chat-content md-content">')
-            parts.append(text)
+            parts.append(text.replace('\n', '<br>'))
             parts.append('</div></div>')
         parts.append('</div>')
 
@@ -322,7 +322,12 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
 if(typeof marked !== 'undefined') {
   marked.setOptions({breaks:true,gfm:true});
   document.querySelectorAll('.md-content').forEach(function(el) {
-    var raw = el.textContent || el.innerText || '';
+    var raw = el.innerHTML
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/<[^>]*>/g, '');
     if(raw.trim()) {
       try { el.innerHTML = marked.parse(raw); } catch(e) {}
     }
