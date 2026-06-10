@@ -3,11 +3,12 @@ version: '3.8'
 services:
   fayan-ai:
     build: .
-    container_name: fayan-ai
+    container_name: fayan-ai-2.0
     ports:
-      - "5099:5099"
+      - "8800:8800"
     environment:
       - MINIMAX_API_KEY=${MINIMAX_API_KEY}
     volumes:
-      - ./extracted_cases:/app/extracted_cases
+      - ./all_cases_perfect.csv:/app/all_cases_perfect.csv:ro
+      - ./internship-tasks/task4-unified-platform/.cache:/app/internship-tasks/task4-unified-platform/.cache
     restart: unless-stopped
