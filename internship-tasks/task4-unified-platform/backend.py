@@ -204,7 +204,7 @@ async def agent_chat_stream(req: ChatRequest):
 # ============================================================
 @app.post("/api/report/generate")
 async def generate_report(req: ReportRequest):
-    import subprocess, tempfile, os, re as _re
+    import subprocess, tempfile, os, re as _re, markdown as _md
     total = dashboard_cache['overview']['total_cases']
 
     # 构建报告 HTML（用列表拼接，不用 f-string）
@@ -218,7 +218,7 @@ async def generate_report(req: ReportRequest):
 <title>''')
     parts.append(req.title)
     parts.append('''</title>
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<!-- Markdown rendered server-side -->
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter','PingFang SC','Microsoft YaHei',sans-serif;background:#f8f9fa;color:#1a1a2e;line-height:1.8;padding:0}
@@ -309,7 +309,8 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
             text = _re.sub(r'<think>.*?</think>', '', text, flags=_re.DOTALL)
             # 不做 HTML 转义！保留原始 Markdown
             parts.append(f'<div class="chat-item {role_class}"><div class="chat-role">{role_label}</div><div class="chat-content md-content">')
-            parts.append(text.replace('\n', '<br>'))
+            rendered = _md.markdown(text, extensions=['tables', 'fenced_code', 'codehilite'])
+            parts.append(rendered)
             parts.append('</div></div>')
         parts.append('</div>')
 
@@ -318,22 +319,7 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
     parts.append('</div>')
 
     # Markdown 渲染脚本
-    parts.append('''<script>
-if(typeof marked !== 'undefined') {
-  marked.setOptions({breaks:true,gfm:true});
-  document.querySelectorAll('.md-content').forEach(function(el) {
-    var raw = el.innerHTML
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/<[^>]*>/g, '');
-    if(raw.trim()) {
-      try { el.innerHTML = marked.parse(raw); } catch(e) {}
-    }
-  });
-}
-</script></body></html>''')
+    parts.append('''<!-- Markdown rendered server-side by Python markdown library --></body></html>''')
 
     report_html = ''.join(parts)
 
