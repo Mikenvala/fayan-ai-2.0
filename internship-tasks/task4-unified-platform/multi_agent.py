@@ -168,7 +168,9 @@ def get_llm(temperature: float = 0.3) -> ChatOpenAI:
         api_key=API_KEY,
         base_url=BASE_URL,
         model=MODEL,
-        temperature=temperature
+        temperature=temperature,
+        timeout=30,
+        max_retries=0
     )
 
 
@@ -475,17 +477,23 @@ class FaYanMultiAgent:
             "revision_count": 0
         }
 
-        result = self.graph.invoke(initial_state, config)
-
-        trace = self._build_trace(result)
-
-        return {
+        try:
+            result = self.graph.invoke(initial_state, config)
+            trace = self._build_trace(result)
+            return {
             "answer": result.get("final_answer", "抱歉，分析过程出现问题，请重试。"),
             "intent": result.get("intent", "unknown"),
             "cases": result.get("retrieved_cases", []),
             "verification": result.get("verification", {}),
-            "agent_trace": trace
-        }
+                "agent_trace": trace
+            }
+        except Exception as e:
+            err = str(e)
+            if "402" in err or "insufficient" in err.lower():
+                msg = "⚠️ API 余额不足，请充值 MiniMax 账户后再试。"
+            else:
+                msg = "❌ 服务错误：" + err[:100]
+            return {"answer": msg, "intent": "error", "cases": [], "verification": {}, "agent_trace": "error"}
 
     def _build_trace(self, result: dict) -> str:
         """构建Agent执行轨迹"""
