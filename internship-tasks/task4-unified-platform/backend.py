@@ -15,6 +15,7 @@ import os
 import sys
 import json
 import time
+import asyncio
 from typing import Optional, List
 from contextlib import asynccontextmanager
 
@@ -205,6 +206,73 @@ async def agent_chat_stream(req: ChatRequest):
 @app.post("/api/report/generate")
 async def generate_report(req: ReportRequest):
     import subprocess, tempfile, os, re as _re, markdown as _md
+    import subprocess, tempfile, os, re as _re, markdown as _md
+
+    def _wrap_box_drawing_blocks(text):
+        """将包含 Unicode 框线字符的连续行转换为精美的 HTML 信息卡片"""
+        BOX_CHARS = set('┌┐└┘├┤┬┴┼│─═╔╗╚╝╠╣╦╩╬║╭╮╯╰')
+        # Strip only outer borders, keep inner structure
+        import re as _re2
+        lines = text.split('\n')
+        result = []
+        i = 0
+        while i < len(lines):
+            line = lines[i]
+            has_box = any(ch in BOX_CHARS for ch in line)
+            if has_box and line.strip():
+                # Collect consecutive box-drawing lines
+                box_lines = [line]
+                j = i + 1
+                while j < len(lines) and any(ch in BOX_CHARS for ch in lines[j]) and lines[j].strip():
+                    box_lines.append(lines[j])
+                    j += 1
+
+                # Parse box content: clean borders, split key:value on first colon
+                content_rows = []
+                for bl in box_lines:
+                    cleaned = bl
+                    for ch in BOX_CHARS:
+                        cleaned = cleaned.replace(ch, '')
+                    cleaned = cleaned.strip()
+                    if not cleaned:
+                        continue
+                    # Try to split on first ：or : as key-value
+                    kv = _re2.split(r'[：:]', cleaned, maxsplit=1)
+                    if len(kv) == 2 and kv[0].strip() and kv[1].strip():
+                        content_rows.append(('kv', kv[0].strip(), kv[1].strip()))
+                    else:
+                        # No colon - whole line as a statement
+                        content_rows.append(('text', cleaned, ''))
+
+                if not content_rows:
+                    i = j
+                    continue
+
+                # Build a beautiful HTML card
+                card_parts = ['<div class="info-card">']
+                # Card header icon
+                card_parts.append('<div class="info-card-header">')
+                card_parts.append('<span class="info-card-icon">⚖️</span>')
+                card_parts.append('<span class="info-card-label">裁判要点</span>')
+                card_parts.append('</div>')
+                card_parts.append('<div class="info-card-body">')
+                for idx_row, row in enumerate(content_rows):
+                    row_type = row[0]
+                    if row_type == 'kv':
+                        card_parts.append('<div class="info-card-row">')
+                        card_parts.append(f'<span class="info-card-key">{row[1]}</span>')
+                        card_parts.append(f'<span class="info-card-val">{row[2]}</span>')
+                        card_parts.append('</div>')
+                    else:
+                        card_parts.append(f'<div class="info-card-stmt"><span class="info-card-dot"></span>{row[1]}</div>')
+                card_parts.append('</div>')
+                card_parts.append('</div>')
+                result.append('\n'.join(card_parts))
+                i = j
+            else:
+                result.append(line)
+                i += 1
+        return '\n'.join(result)
     total = dashboard_cache['overview']['total_cases']
 
     # 构建报告 HTML（用列表拼接，不用 f-string）
@@ -240,8 +308,43 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
 .md-content td{padding:8px 14px;border-bottom:1px solid #eee;background:#fff}
 .md-content tr:last-child td{border:none}
 .md-content blockquote{border-left:3px solid #e94560;margin:8px 0;padding:6px 16px;background:#fff5f5;border-radius:0 8px 8px 0}
-.md-content code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:.85rem}
-.md-content pre{background:#1a1a2e;color:#e0e0e0;padding:16px;border-radius:10px;overflow-x:auto;font-size:.82rem}
+.md-content code{background:#f0f0f0;padding:2px 6px;border-radius:4px;font-size:.85rem;font-family:'SF Mono','Monaco','Menlo','Consolas',monospace}
+.md-content pre{background:#1a1a2e;color:#e0e0e0;padding:16px;border-radius:10px;overflow-x:auto;font-size:.82rem;line-height:1.3;white-space:pre;font-family:'SF Mono','Monaco','Menlo','Consolas',monospace}
+.md-content pre code{background:transparent;padding:0;font-size:inherit;color:inherit}
+.info-card{
+  background:#fff;border:1px solid #e8e8e8;border-radius:16px;
+  margin:20px 0;overflow:hidden;
+  box-shadow:0 4px 16px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04)
+}
+.info-card-header{
+  background:linear-gradient(135deg,#7F1D1D,#991B1B);
+  padding:14px 24px;display:flex;align-items:center;gap:10px
+}
+.info-card-icon{font-size:1.1rem}
+.info-card-label{color:#fff;font-size:.88rem;font-weight:700;letter-spacing:.5px}
+.info-card-body{padding:16px 24px}
+.info-card-row{
+  display:flex;align-items:flex-start;padding:12px 0;
+  border-bottom:1px solid #f5f5f5
+}
+.info-card-row:last-child{border-bottom:none}
+.info-card-key{
+  font-size:.8rem;font-weight:600;color:var(--brand,#7F1D1D);
+  min-width:90px;flex-shrink:0;padding-right:12px;
+  background:#FEF2F2;padding:3px 10px;border-radius:6px;
+  text-align:center;margin-right:12px
+}
+.info-card-val{
+  font-size:.85rem;color:#1a1a2e;font-weight:500;line-height:1.6;flex:1
+}
+.info-card-stmt{
+  font-size:.85rem;color:#1a1a2e;padding:8px 0 8px 24px;
+  position:relative;line-height:1.6
+}
+.info-card-stmt .info-card-dot{
+  position:absolute;left:8px;top:15px;
+  width:6px;height:6px;border-radius:50%;background:#7F1D1D;opacity:.6
+}
 .md-content strong{color:#0f3460}
 .md-content ul,.md-content ol{padding-left:22px;margin:8px 0}
 .md-content p{margin:6px 0}
@@ -307,6 +410,8 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
             text = str(msg.get("content", ""))
             # 移除 <think> 标签
             text = _re.sub(r'<think>.*?</think>', '', text, flags=_re.DOTALL)
+            # 预处理：将 ASCII/Unicode 框线图包裹为代码块，保证等宽渲染
+            text = _wrap_box_drawing_blocks(text)
             # 不做 HTML 转义！保留原始 Markdown
             parts.append(f'<div class="chat-item {role_class}"><div class="chat-role">{role_label}</div><div class="chat-content md-content">')
             rendered = _md.markdown(text, extensions=['tables', 'fenced_code', 'codehilite'])
@@ -371,6 +476,197 @@ async def search_cases(q: str = "", top_k: int = 5):
 # ============================================================
 # 启动入口
 # ============================================================
+
+# ============================================================
+# 模拟法庭辩论 API (SSE 流式)
+# ============================================================
+DEBATE_CASES = [
+    {
+        "id": "p2p",
+        "title": "P2P平台爆雷案",
+        "facts": "某P2P平台虚构34个借款人信息，发布虚假标的，以20%年化收益为诱饵，向1586人吸收资金10.3亿元。所募资金未进入公司账户，由平台实控人周某个人掌控，用于购买房产、豪车、首饰等个人消费。案发后3.56亿元无法归还。",
+        "focus": "周某的行为构成非法吸收公众存款罪还是集资诈骗罪？"
+    },
+    {
+        "id": "ai_copyright",
+        "title": "AI生成内容侵权案",
+        "facts": "某AI公司使用大量网络文章训练模型，生成的AI内容与某知名博主的多篇文章高度相似。博主起诉AI公司侵犯著作权，要求赔偿100万元。AI公司辩称训练数据的使用属于'合理使用'，AI生成内容是'转换性使用'。",
+        "focus": "AI公司使用网络文章训练模型是否构成著作权侵权？AI生成内容与原文相似是否侵权？"
+    },
+    {
+        "id": "delivery_worker",
+        "title": "外卖骑手工伤案",
+        "facts": "外卖骑手张某在配送途中闯红灯被撞重伤，要求平台赔偿医疗费及伤残赔偿金80万元。平台认为张某是'个体工商户'，双方签订的是合作协议而非劳动合同，不构成劳动关系。张某每天工作12小时，接受平台派单管理，收入为唯一生活来源。",
+        "focus": "张某与外卖平台是否构成劳动关系？平台是否应承担工伤赔偿责任？"
+    }
+]
+
+PLAINTIFF_PROMPT = """你是一名资深原告律师。你的目标是为原告争取最大利益。
+
+案件事实：{case_facts}
+争议焦点：{dispute_focus}
+
+对方观点（如有）：{opponent_argument}
+
+请以原告律师身份发表辩论意见，要求：
+1. 引用相关法条支持原告主张
+2. 指出对方观点的漏洞
+3. 提出具体的诉讼请求
+4. 控制在300字以内，专业且有力"""
+
+DEFENDANT_PROMPT = """你是一名资深被告律师。你的目标是为被告辩护，减轻责任。
+
+案件事实：{case_facts}
+争议焦点：{dispute_focus}
+
+对方观点（如有）：{opponent_argument}
+
+请以被告律师身份发表辩论意见，要求：
+1. 引用法条和案例支持被告立场
+2. 反驳对方观点
+3. 提出减轻责任的理由
+4. 控制在300字以内，专业且有力"""
+
+JUDGE_PROMPT = """你是一名资深法官。请根据以下辩论记录做出裁判摘要。
+
+案件事实：{case_facts}
+
+辩论记录：
+{debate_transcript}
+
+请给出：
+1. 案件定性（适用什么法律）
+2. 双方的合理主张
+3. 裁判倾向（更支持哪方，为什么）
+4. 建议的和解/判决方案"""
+
+
+class DebateOrchestrator:
+    """多Agent辩论编排器"""
+    def __init__(self):
+        from langchain_openai import ChatOpenAI
+        self.plaintiff_llm = ChatOpenAI(
+            api_key=os.environ.get("MINIMAX_API_KEY", ""),
+            base_url="https://api.minimax.chat/v1",
+            model="MiniMax-M2.7", temperature=0.6, timeout=60, max_retries=1
+        )
+        self.defendant_llm = ChatOpenAI(
+            api_key=os.environ.get("MINIMAX_API_KEY", ""),
+            base_url="https://api.minimax.chat/v1",
+            model="MiniMax-M2.7", temperature=0.6, timeout=60, max_retries=1
+        )
+        self.judge_llm = ChatOpenAI(
+            api_key=os.environ.get("MINIMAX_API_KEY", ""),
+            base_url="https://api.minimax.chat/v1",
+            model="MiniMax-M2.7", temperature=0.3, timeout=60, max_retries=1
+        )
+
+    async def run_stream(self, facts: str, focus: str, rounds: int = 3):
+        """流式运行辩论，逐轮 yield JSON 事件"""
+        plaintiff_arg = ""
+        defendant_arg = ""
+        transcript = []
+
+        yield json.dumps({"type": "start", "facts": facts, "focus": focus, "rounds": rounds}) + "\n"
+
+        for rnd in range(1, rounds + 1):
+            # 原告发言
+            yield json.dumps({"type": "status", "round": rnd, "speaker": "plaintiff", "stage": "thinking"}) + "\n"
+            p_prompt = PLAINTIFF_PROMPT.format(
+                case_facts=facts, dispute_focus=focus,
+                opponent_argument=defendant_arg if defendant_arg else "（首轮发言）"
+            )
+            try:
+                p_resp = self.plaintiff_llm.invoke(p_prompt)
+                plaintiff_arg = p_resp.content
+                # Strip <think> tags
+                import re as _re
+                plaintiff_arg = _re.sub(r'<think>.*?</think>', '', plaintiff_arg, flags=_re.DOTALL).strip()
+            except Exception as e:
+                plaintiff_arg = f"[发言失败: {e}]"
+
+            transcript.append({"round": rnd, "role": "plaintiff", "content": plaintiff_arg})
+            yield json.dumps({"type": "speech", "round": rnd, "role": "plaintiff", "label": "👤 原告律师", "content": plaintiff_arg}) + "\n"
+            await asyncio.sleep(0.3)
+
+            # 被告发言
+            yield json.dumps({"type": "status", "round": rnd, "speaker": "defendant", "stage": "thinking"}) + "\n"
+            d_prompt = DEFENDANT_PROMPT.format(
+                case_facts=facts, dispute_focus=focus,
+                opponent_argument=plaintiff_arg
+            )
+            try:
+                d_resp = self.defendant_llm.invoke(d_prompt)
+                defendant_arg = d_resp.content
+                import re as _re
+                defendant_arg = _re.sub(r'<think>.*?</think>', '', defendant_arg, flags=_re.DOTALL).strip()
+            except Exception as e:
+                defendant_arg = f"[发言失败: {e}]"
+
+            transcript.append({"round": rnd, "role": "defendant", "content": defendant_arg})
+            yield json.dumps({"type": "speech", "round": rnd, "role": "defendant", "label": "👤 被告律师", "content": defendant_arg}) + "\n"
+            await asyncio.sleep(0.3)
+
+        # 裁判总结
+        yield json.dumps({"type": "status", "round": 0, "speaker": "judge", "stage": "deliberating"}) + "\n"
+        transcript_text = "\n\n".join([
+            f"第{t['round']}轮 - {'原告律师' if t['role'] == 'plaintiff' else '被告律师'}:\n{t['content']}"
+            for t in transcript
+        ])
+        j_prompt = JUDGE_PROMPT.format(case_facts=facts, debate_transcript=transcript_text)
+        try:
+            j_resp = self.judge_llm.invoke(j_prompt)
+            verdict = j_resp.content
+            import re as _re
+            verdict = _re.sub(r'<think>.*?</think>', '', verdict, flags=_re.DOTALL).strip()
+        except Exception as e:
+            verdict = f"[裁判失败: {e}]"
+
+        yield json.dumps({"type": "verdict", "label": "⚖️ 法官裁判", "content": verdict, "transcript": transcript}) + "\n"
+        yield json.dumps({"type": "done"}) + "\n"
+
+
+@app.get("/api/debate/cases")
+async def get_debate_cases():
+    """获取预设辩论案例列表"""
+    return JSONResponse([{"id": c["id"], "title": c["title"], "focus": c["focus"]} for c in DEBATE_CASES])
+
+
+class DebateRequest(BaseModel):
+    case_id: str = "p2p"
+    facts: str = ""
+    focus: str = ""
+    rounds: int = 3
+
+@app.post("/api/debate/run")
+async def run_debate(req: DebateRequest):
+    """运行多Agent辩论 (SSE流式)"""
+    case_id = req.case_id
+    custom_facts = req.facts
+    custom_focus = req.focus
+    rounds = min(req.rounds, 5)
+
+    # 查找预设案例或使用自定义
+    case = next((c for c in DEBATE_CASES if c["id"] == case_id), None)
+    if custom_facts and custom_focus:
+        facts = custom_facts
+        focus = custom_focus
+    elif case:
+        facts = case["facts"]
+        focus = case["focus"]
+    else:
+        facts = DEBATE_CASES[0]["facts"]
+        focus = DEBATE_CASES[0]["focus"]
+
+    orchestrator = DebateOrchestrator()
+
+    async def event_stream():
+        async for line in orchestrator.run_stream(facts, focus, rounds):
+            yield f"data: {line}\n\n"
+
+    return StreamingResponse(event_stream(), media_type="text/event-stream")
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8800, log_level="info")
+

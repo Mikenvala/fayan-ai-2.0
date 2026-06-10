@@ -386,6 +386,33 @@ body{
 .progress-step.wait .step-icon{background:#E5E7EB;color:#9CA3AF}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 
+
+/* ===== 辩论布局 ===== */
+.debate-layout{display:grid;grid-template-columns:300px 1fr;gap:20px;max-width:1400px;margin:0 auto}
+.debate-sidebar{display:flex;flex-direction:column;gap:16px}
+.debate-main{min-width:0}
+.debate-thread{display:flex;flex-direction:column;gap:16px;max-height:620px;overflow-y:auto;padding-right:8px}
+.debate-empty{text-align:center;padding:80px 20px;color:var(--text-secondary)}
+.debate-speech{
+  background:var(--surface);border-radius:var(--radius);padding:20px 24px;
+  box-shadow:var(--shadow-sm);border:1px solid var(--border);
+  animation:speechIn .4s ease-out;transition:var(--transition)
+}
+.debate-speech.plaintiff{border-left:4px solid #dc2626}
+.debate-speech.defendant{border-left:4px solid #2563eb}
+.debate-speech.judge{border-left:4px solid #7c3aed;background:linear-gradient(135deg,#faf5ff,#f5f3ff)}
+@keyframes speechIn{from{opacity:0;transform:translateX(-12px)}to{opacity:1;transform:translateX(0)}}
+.debate-speech .speech-header{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.debate-speech .speech-role{font-weight:700;font-size:.88rem}
+.debate-speech .speech-round{font-size:.72rem;color:var(--text-secondary);background:var(--bg);padding:2px 10px;border-radius:12px}
+.debate-speech .speech-body{font-size:.85rem;line-height:1.8;color:var(--text);white-space:pre-wrap}
+.typing-dots{display:inline-flex;gap:6px}
+.typing-dots span{width:8px;height:8px;border-radius:50%;background:var(--brand);animation:dotPulse 1.4s infinite ease-in-out}
+.typing-dots span:nth-child(2){animation-delay:.2s}
+.typing-dots span:nth-child(3){animation-delay:.4s}
+@keyframes dotPulse{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1.2)}}
+@media(max-width:900px){.debate-layout{grid-template-columns:1fr}}
+
 </style>
 </head>
 <body>
@@ -399,6 +426,9 @@ body{
     </button>
     <button class="nav-tab" onclick="switchTab('qa')">
       <span>💬</span> 智能问答
+    </button>
+    <button class="nav-tab" onclick="switchTab('debate')">
+      <span>⚖️</span> 模拟辩论
     </button>
     <button class="nav-tab" onclick="switchTab('report')">
       <span>📄</span> 报告生成
@@ -475,6 +505,52 @@ body{
   </div>
 </div>
 
+
+    <!-- ========== Tab: 模拟辩论 ==========-->
+    <div class="tab-content" id="tab-debate">
+      <div class="debate-layout">
+        <div class="debate-sidebar">
+          <div class="dash-panel" style="margin-bottom:16px">
+            <h3>📋 选择案例</h3>
+            <select id="debateCase" style="width:100%;padding:10px 12px;border-radius:8px;border:1px solid var(--border);font-size:.88rem;font-family:inherit;margin-bottom:10px;background:var(--surface)">
+              <option value="p2p">P2P平台爆雷案 — 集资诈骗 vs 非吸</option>
+              <option value="ai_copyright">AI生成内容侵权案 — 著作权争议</option>
+              <option value="delivery_worker">外卖骑手工伤案 — 劳动关系认定</option>
+            </select>
+            <details style="margin-bottom:10px">
+              <summary style="cursor:pointer;font-size:.8rem;color:var(--brand);font-weight:600">📝 自定义案例</summary>
+              <textarea id="customFacts" placeholder="案件事实..." style="width:100%;height:80px;margin-top:8px;padding:10px;border-radius:8px;border:1px solid var(--border);font-size:.82rem;font-family:inherit;resize:vertical"></textarea>
+              <textarea id="customFocus" placeholder="争议焦点..." style="width:100%;height:60px;margin-top:8px;padding:10px;border-radius:8px;border:1px solid var(--border);font-size:.82rem;font-family:inherit;resize:vertical"></textarea>
+            </details>
+            <div style="display:flex;gap:8px">
+              <button id="debateStartBtn" onclick="startDebate()" style="flex:1;padding:12px;background:var(--brand);color:#fff;border:none;border-radius:8px;font-weight:600;cursor:pointer;font-size:.85rem;transition:var(--transition)">▶ 开始辩论</button>
+              <button onclick="resetDebate()" style="padding:12px 16px;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.85rem">🔄 重置</button>
+            </div>
+          </div>
+          <div class="dash-panel">
+            <h3>⚙️ 辩论设置</h3>
+            <label style="font-size:.8rem;color:var(--text-secondary);display:block;margin-bottom:4px">辩论轮数</label>
+            <input type="range" id="debateRounds" min="1" max="5" value="3" style="width:100%" oninput="document.getElementById('roundsLabel').textContent=this.value+' 轮'">
+            <span id="roundsLabel" style="font-size:.8rem;color:var(--text-secondary)">3 轮</span>
+          </div>
+        </div>
+        <div class="debate-main">
+          <div id="debateThread" class="debate-thread">
+            <div class="debate-empty">
+              <div style="font-size:3rem;margin-bottom:12px">⚖️</div>
+              <div style="font-size:1.1rem;font-weight:600;color:var(--text)">法眼AI · 多Agent模拟法庭</div>
+              <div style="font-size:.82rem;color:var(--text-secondary);margin-top:6px">原告律师 vs 被告律师 · 3轮辩论 · 法官终裁</div>
+              <div style="font-size:.75rem;color:var(--text-secondary);margin-top:4px">选择案例后点击「开始辩论」</div>
+            </div>
+          </div>
+          <div id="debateLoading" style="display:none;text-align:center;padding:40px">
+            <div class="typing-dots"><span></span><span></span><span></span></div>
+            <div style="color:var(--text-secondary);font-size:.82rem;margin-top:12px" id="debateStatus">辩论准备中...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
 <!-- ========== Tab: 报告生成 ========== -->
 <div class="tab-content" id="tab-report">
   <div class="report-area">
@@ -514,9 +590,9 @@ let charts = {};
 // Tab 切换
 // ============================================================
 function switchTab(name) {
+  const labels = {dashboard:'仪表盘', qa:'问答', debate:'辩论', report:'报告'};
   document.querySelectorAll('.nav-tab').forEach((t,i) => {
-    t.classList.toggle('active', t.textContent.includes(
-      name==='dashboard'?'仪表盘':name==='qa'?'问答':'报告'));
+    t.classList.toggle('active', t.textContent.includes(labels[name] || ''));
   });
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-'+name).classList.add('active');
@@ -954,6 +1030,105 @@ setTimeout(() => {
     placeholder.textContent = placeholder.textContent.replace('{total_cases}', totalCases.toLocaleString());
   }
 }, 1500);
+
+// ============================================================
+// 模拟辩论
+// ============================================================
+var debateRunning = false;
+
+async function startDebate() {
+  if (debateRunning) return;
+  debateRunning = true;
+
+  var thread = document.getElementById('debateThread');
+  var loading = document.getElementById('debateLoading');
+  var statusEl = document.getElementById('debateStatus');
+  var btn = document.getElementById('debateStartBtn');
+
+  thread.innerHTML = '';
+  loading.style.display = 'block';
+  btn.disabled = true;
+  btn.textContent = '⏳ 辩论中...';
+  statusEl.textContent = '辩论准备中...';
+
+  var caseId = document.getElementById('debateCase').value;
+  var rounds = parseInt(document.getElementById('debateRounds').value) || 3;
+  var customFacts = document.getElementById('customFacts').value.trim();
+  var customFocus = document.getElementById('customFocus').value.trim();
+
+  try {
+    var resp = await fetch('/api/debate/run', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({case_id: caseId, facts: customFacts, focus: customFocus, rounds: rounds})
+    });
+
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+
+    while (true) {
+      var result = await reader.read();
+      if (result.done) break;
+      buffer += decoder.decode(result.value, {stream: true});
+      var lines2 = buffer.split('\n');
+      buffer = lines2.pop() || '';
+
+      for (var i = 0; i < lines2.length; i++) {
+        var line = lines2[i].trim();
+        if (!line.startsWith('data: ')) continue;
+
+        try { var data = JSON.parse(line.slice(6)); }
+        catch(ex) { continue; }
+
+        if (data.type === 'start') {
+          loading.style.display = 'none';
+          thread.innerHTML = '';
+        } else if (data.type === 'status') {
+          if (data.speaker === 'plaintiff') statusEl.textContent = '第 '+data.round+' 轮 · 原告律师准备发言...';
+          else if (data.speaker === 'defendant') statusEl.textContent = '第 '+data.round+' 轮 · 被告律师准备发言...';
+          else statusEl.textContent = '法官合议中...';
+        } else if (data.type === 'speech') {
+          loading.style.display = 'none';
+          var cls = data.role === 'plaintiff' ? 'plaintiff' : 'defendant';
+          var roundLabel = data.round ? '<span class="speech-round">第 '+data.round+' 轮</span>' : '';
+          var rendered = marked.parse(data.content);
+          var divEl = document.createElement('div');
+          divEl.className = 'debate-speech ' + cls;
+          divEl.innerHTML = '<div class="speech-header"><span class="speech-role">'+data.label+'</span>'+roundLabel+'</div><div class="speech-body markdown-body">'+rendered+'</div>';
+          thread.appendChild(divEl);
+          thread.scrollTop = thread.scrollHeight;
+        } else if (data.type === 'verdict') {
+          loading.style.display = 'none';
+          var renderedV = marked.parse(data.content);
+          var divV = document.createElement('div');
+          divV.className = 'debate-speech judge';
+          divV.innerHTML = '<div class="speech-header"><span class="speech-role">'+data.label+'</span><span class="speech-round">终裁</span></div><div class="speech-body markdown-body">'+renderedV+'</div>';
+          thread.appendChild(divV);
+          thread.scrollTop = thread.scrollHeight;
+        } else if (data.type === 'done') {
+          loading.style.display = 'none';
+        }
+      }
+    }
+  } catch(e) {
+    thread.innerHTML += '<div style="color:#dc2626;padding:16px">❌ 辩论失败: ' + e.message + '</div>';
+  }
+
+  debateRunning = false;
+  btn.disabled = false;
+  btn.textContent = '▶ 开始辩论';
+  loading.style.display = 'none';
+}
+
+function resetDebate() {
+  if (debateRunning) return;
+  var thread2 = document.getElementById('debateThread');
+  thread2.innerHTML = '<div class="debate-empty"><div style="font-size:3rem;margin-bottom:12px">⚖️</div><div style="font-size:1.1rem;font-weight:600;color:var(--text)">法眼AI · 多Agent模拟法庭</div><div style="font-size:.82rem;color:var(--text-secondary);margin-top:6px">原告律师 vs 被告律师 · 3轮辩论 · 法官终裁</div></div>';
+  document.getElementById('customFacts').value = '';
+  document.getElementById('customFocus').value = '';
+}
+
 </script>
 
 </body>
