@@ -212,12 +212,8 @@ async def generate_report(req: ReportRequest):
         return str(t).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
     def process_think(t):
-        def repl(m):
-            inner = esc_html(m.group(1)[:500])
-            return ('<span class="think-toggle" onclick="var n=this.nextElementSibling;'
-                    'n.style.display=n.style.display===\'block\'?\'none\':\'block\'">'
-                    '💭 推理过程</span><div class="think-block">' + inner + '</div>')
-        return _re.sub(r'<think>(.*?)</think>', repl, t, flags=_re.DOTALL)
+        """Remove <think> tags entirely for reports - simpler and cleaner"""
+        return _re.sub(r'<think>.*?</think>', '💭 [推理过程已省略]', t, flags=_re.DOTALL)
 
     chat_section = ""
     if req.chat_history:
@@ -234,7 +230,8 @@ async def generate_report(req: ReportRequest):
             text = text.replace('&amp;lt;/div&amp;gt;', '</div>')
             text = text.replace('&amp;quot;', '"')
             text = text.replace('\n', '<br>')
-            chat_section += f'<div class="chat-item {role_class}"><div class="chat-role">{role_label}</div><div class="chat-content md-content">{text}</div></div>'
+            text_safe = text.replace('{', '{{').replace('}', '}}')
+            chat_section += f'<div class="chat-item {role_class}"><div class="chat-role">{role_label}</div><div class="chat-content md-content">{text_safe}</div></div>'
         chat_section += "</div>"
 
     ai_summary = ""
@@ -245,7 +242,8 @@ async def generate_report(req: ReportRequest):
             last_ai = _re.sub(r'<think>.*?</think>', '', last_ai, flags=_re.DOTALL)
             last_ai = _re.sub(r'---+.*$', '', last_ai, flags=_re.DOTALL)
             last_ai = esc_html(last_ai).replace('\n', '<br>')
-            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="ai-conclusion md-content">{last_ai}</div></div>'
+            last_ai_safe = last_ai.replace('{', '{{').replace('}', '}}')
+            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="ai-conclusion md-content">{last_ai_safe}</div></div>'
 
     report_html = f"""<!DOCTYPE html>
 <html lang="zh-CN">
@@ -418,8 +416,17 @@ tr:hover td{{background:#f8f9fa}}
 if(typeof marked !== 'undefined') {{
   marked.setOptions({{breaks:true,gfm:true}});
   document.querySelectorAll('.md-content').forEach(function(el) {{
-    var raw = el.textContent || el.innerText || '';
-    try {{ el.innerHTML = marked.parse(raw); }} catch(e) {{}}
+    // Get raw content - decode HTML entities first
+    var raw = el.innerHTML
+      .replace(/&amp;lt;/g, '<')
+      .replace(/&amp;gt;/g, '>')
+      .replace(/&amp;amp;/g, '&')
+      .replace(/&amp;quot;/g, '"')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<[^>]*>/g, '');
+    if(raw.trim()) {{
+      try {{ el.innerHTML = marked.parse(raw); }} catch(e) {{}}
+    }}
   }});
 }}
 </script>
