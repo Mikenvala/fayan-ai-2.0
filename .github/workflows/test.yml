@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install dependencies
+        run: pip install -r internship-tasks/task4-unified-platform/requirements.txt markdown
+      - name: Syntax check
+        run: |
+          python -m py_compile internship-tasks/task4-unified-platform/backend.py
+          python -m py_compile internship-tasks/task4-unified-platform/multi_agent.py
+          python -m py_compile internship-tasks/task4-unified-platform/dashboard_data.py
+          python -m py_compile internship-tasks/task5-benchmark/benchmark_runner.py
+      - name: Dashboard data check
+        run: cd internship-tasks/task4-unified-platform && python dashboard_data.py
+        env:
+          SKIP_LLM: 'true'
