@@ -509,7 +509,8 @@ async function sendMessage() {
             // Hide <think> tags and render markdown
             var display = answerText.replace(/<think>[\s\S]*?<\/think>/g, function(m) {
               var inner = m.replace(/<think>/, '').replace(/<\/think>/, '');
-              return '<span class="think-toggle-cg" onclick="var n=this.nextElementSibling;n.style.display=n.style.display=='block'?'none':'block'">💭 思考中...</span><div class="think-block-cg">'+inner+'</div>';
+              var thinkId = 'think-' + Math.random().toString(36).substr(2,6);
+return '<span class="think-toggle-cg" data-target="'+thinkId+'" onclick="var t=document.getElementById(this.dataset.target);t.style.display=t.style.display===\'block\'?\'none\':\'block\'">💭 思考中...</span><div class="think-block-cg" id="'+thinkId+'">'+inner+'</div>';
             });
             document.getElementById(msgId+'-content').innerHTML = renderMD(display) + '<span class="typing-cursor"></span>';
             scrollChat();
@@ -524,7 +525,8 @@ async function sendMessage() {
   // 最后渲染 - 处理think标签
   var finalDisplay = answerText.replace(/<think>[\s\S]*?<\/think>/g, function(m) {
     var inner = m.replace(/<think>/, '').replace(/<\/think>/, '');
-    return '<span class="think-toggle-cg" onclick="var n=this.nextElementSibling;n.classList.toggle('open')">💭 推理过程</span><div class="think-block-cg">' + inner + '</div>';
+    var tid = 'thinkf-' + Math.random().toString(36).substr(2,6);
+return '<span class="think-toggle-cg" data-target="'+tid+'" onclick="document.getElementById(this.dataset.target).classList.toggle(\'open\')">💭 推理过程</span><div class="think-block-cg" id="'+tid+'">' + inner + '</div>';
   });
   document.getElementById(msgId+'-content').innerHTML = renderMD(finalDisplay);
   document.getElementById(msgId+'-progress').style.display = 'none';
@@ -616,7 +618,7 @@ function appendMessage(role, content, isTemp) {
     '<div class="msg-body">' +
       '<div class="msg-bubble-cg markdown-body">' + content + '</div>' +
       '<div class="msg-actions">' +
-        '<button onclick="copyMsg('' + id + '')">📋 复制</button>' +
+        '<button data-msgid="'+id+'" onclick="copyMsg(this.dataset.msgid)">📋 复制</button>' +
       '</div>' +
       '<div class="msg-meta" style="font-size:.7rem;color:var(--text-light);margin-top:4px">' + new Date().toLocaleTimeString() + '</div>' +
     '</div>';
@@ -625,15 +627,16 @@ function appendMessage(role, content, isTemp) {
   return id;
 }
 
-function copyMsg(id) {
-  var el = document.getElementById(id);
+function copyMsg(msgid) {
+  var el = document.getElementById(msgid);
   if (!el) return;
   var bubble = el.querySelector('.msg-bubble-cg');
   if (!bubble) return;
-  navigator.clipboard.writeText(bubble.textContent).then(function() {
+  var text = bubble.textContent || bubble.innerText || '';
+  navigator.clipboard.writeText(text).then(function() {
     var btn = el.querySelector('.msg-actions button');
     if (btn) { btn.textContent = '✅ 已复制'; setTimeout(function(){ btn.textContent = '📋 复制'; }, 2000); }
-  });
+  }).catch(function(){});
 }
 
 function removeMessage(id) {
