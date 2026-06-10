@@ -204,21 +204,40 @@ async def agent_chat_stream(req: ChatRequest):
 # ============================================================
 @app.post("/api/report/generate")
 async def generate_report(req: ReportRequest):
-    """生成分析报告（HTML/PDF格式，含完整对话总结和AI结论）"""
-    import subprocess, tempfile, os
+    """生成分析报告（HTML/PDF，含Markdown渲染的完整对话）"""
+    import subprocess, tempfile, os, re as _re
     total = dashboard_cache['overview']['total_cases']
+
+    def esc_html(t):
+        return str(t).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+    def process_think(t):
+        """将 <think> 转为可折叠块"""
+        def repl(m):
+            inner = esc_html(m.group(1)[:500])
+            return ('<span class="think-toggle" onclick="var n=this.nextElementSibling;'
+                    'n.style.display=n.style.display==\'block\'?\'none\':\'block\'">'
+                    '💭 推理过程</span><div class="think-block">' + inner + '</div>')
+        return _re.sub(r'<think>(.*?)</think>', repl, t, flags=_re.DOTALL)
 
     # 构建对话摘要
     chat_section = ""
     if req.chat_history:
-        chat_section = '<div class="section"><h2>五、对话记录摘要</h2><table><tr><th>角色</th><th>内容</th></tr>'
+        chat_section = '<div class="section"><h2>五、对话记录摘要</h2><table><tr><th style="width:60px">角色</th><th>内容</th></tr>'
         for msg in req.chat_history[-20:]:
             role = "👤 用户" if msg.get("role") == "user" else "🤖 AI"
             text = str(msg.get("content", ""))
-            import re
-            text = re.sub(r'<think>.*?</think>', '[推理已省略]', text, flags=re.DOTALL)
-            text = text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
-            chat_section += f"<tr><td>{role}</td><td>{text}</td></tr>"
+            text = process_think(text)
+            # Escape HTML for safe embedding
+            text = esc_html(text)
+            # Restore our think-block HTML tags
+            text = text.replace('&amp;lt;span class=&amp;quot;think-toggle', '<span class="think-toggle')
+            text = text.replace('&amp;lt;div class=&amp;quot;think-block', '<div class="think-block')
+            text = text.replace('&amp;lt;/span&amp;gt;', '</span>')
+            text = text.replace('&amp;lt;/div&amp;gt;', '</div>')
+            text = text.replace('&amp;quot;', '"')
+            text = text.replace('\n', '<br>')
+            chat_section += f'<tr><td style="width:60px;vertical-align:top;font-weight:600">{role}</td><td><div class="md-content">{text}</div></td></tr>'
         chat_section += "</table></div>"
 
     # AI 分析结论
@@ -226,12 +245,11 @@ async def generate_report(req: ReportRequest):
     if req.chat_history:
         ai_msgs = [m for m in req.chat_history if m.get("role") == "assistant"]
         if ai_msgs:
-            import re
             last_ai = ai_msgs[-1].get("content", "")
-            last_ai = re.sub(r'<think>.*?</think>', '', last_ai, flags=re.DOTALL)
-            last_ai = re.sub(r'---+.*$', '', last_ai, flags=re.DOTALL)
-            last_ai = last_ai.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\n", "<br>")
-            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="summary-box">{last_ai}</div></div>'
+            last_ai = _re.sub(r'<think>.*?</think>', '', last_ai, flags=_re.DOTALL)
+            last_ai = _re.sub(r'---+.*$', '', last_ai, flags=_re.DOTALL)
+            last_ai = esc_html(last_ai).replace('\n', '<br>')
+            ai_summary = f'<div class="section"><h2>六、AI 分析结论</h2><div class="summary-box md-content">{last_ai}</div></div>'
 
     # 生成 HTML
     report_html = f"""<!DOCTYPE html>
@@ -239,6 +257,7 @@ async def generate_report(req: ReportRequest):
 <head>
 <meta charset="UTF-8">
 <title>{req.title}</title>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
 <style>
 body{{font-family:"PingFang SC","Microsoft YaHei",sans-serif;max-width:900px;margin:40px auto;padding:20px;color:#333;line-height:1.8}}
 h1{{text-align:center;color:#7F1D1D;border-bottom:2px solid #7F1D1D;padding-bottom:10px}}
@@ -255,6 +274,22 @@ tr:nth-child(even){{background:#fafafa}}
 .footer{{margin-top:40px;text-align:center;color:#999;font-size:.85rem;border-top:1px solid #eee;padding-top:20px}}
 .meta{{text-align:center;color:#666;font-size:.85rem;margin-bottom:20px}}
 .summary-box{{background:#FEF2F2;padding:20px;border-radius:8px;border-left:4px solid #7F1D1D;line-height:1.9}}
+/* Markdown rendering */
+.md-content h2{{font-size:1.1rem;color:#7F1D1D;border-bottom:1px solid #FCA5A5;padding-bottom:4px;margin:12px 0 6px}}
+.md-content h3{{font-size:1rem;color:#5B0E0E;margin:10px 0 4px}}
+.md-content table{{width:100%;border-collapse:collapse;margin:8px 0;font-size:.85rem}}
+.md-content th,.md-content td{{border:1px solid #ddd;padding:6px 10px;text-align:left}}
+.md-content th{{background:#FEF2F2;font-weight:600}}
+.md-content blockquote{{border-left:3px solid #7F1D1D;margin:6px 0;padding:4px 12px;background:#FFF5F5;border-radius:0 4px 4px 0}}
+.md-content code{{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:.85rem}}
+.md-content pre{{background:#f8f8f8;padding:12px;border-radius:6px;overflow-x:auto;font-size:.82rem;border:1px solid #eee}}
+.md-content ul,.md-content ol{{padding-left:20px;margin:4px 0}}
+.md-content p{{margin:5px 0}}
+.md-content hr{{border:none;border-top:1px solid #ddd;margin:12px 0}}
+.md-content strong{{color:#333}}
+.think-block{{background:#f9fafb;border:1px dashed #d1d5db;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:.82rem;color:#6b7280;display:none;max-height:120px;overflow-y:auto}}
+.think-toggle{{cursor:pointer;color:#7F1D1D;font-size:.78rem;font-weight:600;user-select:none}}
+.think-toggle:hover{{text-decoration:underline}}
 </style>
 </head>
 <body>
@@ -318,13 +353,22 @@ tr:nth-child(even){{background:#fafafa}}
 <p>⚖️ 法眼AI 2.0 · 智能法律案例分析系统 | 报告自动生成</p>
 <p>本报告基于 {total:,} 条裁判文书数据自动生成 | GitHub: Mikenvala/fayan-ai-2.0</p>
 </div>
+<script>
+// Markdown 自动渲染
+if(typeof marked !== 'undefined') {{
+  marked.setOptions({{breaks: true, gfm: true}});
+  document.querySelectorAll('.md-content').forEach(function(el) {{
+    var raw = el.textContent || el.innerText || '';
+    try {{ el.innerHTML = marked.parse(raw); }} catch(e) {{}}
+  }});
+}}
+</script>
 </body>
 </html>"""
 
     import urllib.parse
-    
+
     if req.format == "pdf":
-        # Use Chrome headless to convert HTML to PDF
         try:
             with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
                 f.write(report_html)
@@ -332,7 +376,7 @@ tr:nth-child(even){{background:#fafafa}}
             pdf_path = html_path.replace('.html', '.pdf')
             
             chrome = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-            result = subprocess.run([
+            subprocess.run([
                 chrome, '--headless', '--disable-gpu', '--no-sandbox',
                 '--print-to-pdf=' + pdf_path,
                 '--no-pdf-header-footer',
@@ -352,10 +396,8 @@ tr:nth-child(even){{background:#fafafa}}
                 headers={"Content-Disposition": f"attachment; filename*=UTF-8''{filename}"}
             )
         except Exception as e:
-            # Fallback: return HTML with error note
             report_html = f"<p style='color:red'>PDF生成失败({str(e)})，请下载HTML格式</p>" + report_html
     
-    # Default: HTML
     filename = urllib.parse.quote(req.title + ".html")
     return HTMLResponse(
         content=report_html,
