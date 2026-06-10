@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>法眼AI 2.0 · 统一平台</title>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<style>
+/* ========== 全局样式 ========== */
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --primary:#7F1D1D;--primary-dark:#5B0E0E;--primary-light:#FEF2F2;
+  --bg:#F5F5F5;--card:#fff;--text:#1F2937;--text-light:#6B7280;
+  --border:#E5E7EB;--shadow:0 1px 3px rgba(0,0,0,.06);
+  --radius:12px;--radius-sm:8px;
+}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;
+  color:var(--text);background:var(--bg);min-height:100vh;
+}
+/* ========== 顶部导航 ========== */
+.header{
+  background:linear-gradient(135deg,var(--primary),var(--primary-dark));
+  color:#fff;padding:0 24px;display:flex;align-items:center;justify-content:space-between;
+  height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 12px rgba(127,29,29,.2);
+}
+.header .logo{display:flex;align-items:center;gap:10px;font-size:1.2rem;font-weight:700}
+.header .logo .icon{font-size:1.5rem}
+.nav-tabs{display:flex;gap:4px;height:100%}
+.nav-tab{
+  padding:0 20px;height:100%;display:flex;align-items:center;gap:6px;
+  border:none;background:none;color:rgba(255,255,255,.7);font-size:.9rem;
+  cursor:pointer;transition:.2s;border-bottom:3px solid transparent;
+  font-family:inherit;
+}
+.nav-tab:hover{color:#fff;background:rgba(255,255,255,.08)}
+.nav-tab.active{color:#fff;border-bottom-color:#FCA5A5;font-weight:600}
+/* ========== 主体 ========== */
+.main{padding:20px 24px}
+.tab-content{display:none}
+.tab-content.active{display:block}
+/* ========== 仪表盘 ========== */
+.overview-cards{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;
+}
+.ov-card{
+  background:var(--card);border-radius:var(--radius);padding:24px;
+  text-align:center;box-shadow:var(--shadow);border:1px solid var(--border);
+}
+.ov-card .num{font-size:2rem;font-weight:700;color:var(--primary)}
+.ov-card .label{font-size:.82rem;color:var(--text-light);margin-top:4px}
+.dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.dash-panel{
+  background:var(--card);border-radius:var(--radius);padding:20px;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+}
+.dash-panel h3{font-size:.95rem;margin-bottom:12px;color:#555;border-left:3px solid var(--primary);padding-left:10px}
+.dash-chart{width:100%;height:380px}
+.dash-full{grid-column:1/-1}
+.dash-chart-lg{width:100%;height:500px}
+/* ========== 问答面板 ========== */
+.qa-layout{display:grid;grid-template-columns:1fr 340px;gap:20px;max-width:1400px}
+.qa-main{min-width:0}
+.qa-sidebar{display:flex;flex-direction:column;gap:16px}
+.qa-card{background:var(--card);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.chat-area{height:500px;overflow-y:auto;padding:16px;background:#FAFAFA;border-radius:var(--radius-sm);margin-bottom:16px}
+.chat-msg{margin-bottom:16px;animation:fadeIn .3s}
+.chat-msg.user{text-align:right}
+.chat-msg.assistant{}
+.msg-bubble{
+  display:inline-block;max-width:85%;padding:12px 16px;border-radius:16px;
+  text-align:left;line-height:1.7;font-size:.9rem;
+}
+.chat-msg.user .msg-bubble{background:var(--primary);color:#fff;border-bottom-right-radius:4px}
+.chat-msg.assistant .msg-bubble{background:#fff;border:1px solid var(--border);border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.msg-bubble h3{font-size:.95rem;margin:8px 0 4px}
+.msg-bubble blockquote{background:#FEF2F2;border-left:3px solid var(--primary);margin:8px 0;padding:8px 12px;border-radius:0 4px 4px 0}
+.msg-bubble .case-tag{display:inline-block;background:var(--primary-light);color:var(--primary);padding:2px 8px;border-radius:12px;font-size:.75rem;margin:2px}
+.msg-meta{font-size:.72rem;color:var(--text-light);margin-top:4px}
+.input-row{display:flex;gap:8px}
+.input-row textarea{
+  flex:1;padding:12px 16px;border:1.5px solid var(--border);border-radius:var(--radius-sm);
+  font-size:.9rem;resize:none;font-family:inherit;min-height:46px;max-height:120px;
+}
+.input-row textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(127,29,29,.06)}
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border-radius:var(--radius-sm);
+  font-size:.88rem;font-weight:600;border:none;cursor:pointer;transition:.2s;font-family:inherit;
+}
+.btn-primary{background:var(--primary);color:#fff}
+.btn-primary:hover{background:#991B1B}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--border)}
+.btn-outline:hover{background:var(--primary-light)}
+.btn-sm{padding:6px 12px;font-size:.78rem}
+/* 侧边栏 */
+.side-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.side-card h4{font-size:.85rem;color:var(--text-light);margin-bottom:10px}
+.case-item{border-bottom:1px solid var(--border);padding:10px 0;font-size:.82rem}
+.case-item:last-child{border:none}
+.case-item .case-name{font-weight:600;color:var(--primary)}
+.case-item .case-desc{color:var(--text-light);margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.case-item .case-score{font-size:.7rem;background:var(--primary-light);color:var(--primary);padding:1px 6px;border-radius:8px;float:right}
+/* 报告 */
+.report-area{max-width:800px;margin:0 auto}
+.report-card{background:var(--card);border-radius:var(--radius);padding:30px;box-shadow:var(--shadow);border:1px solid var(--border)}
+.report-card h2{margin-bottom:20px;color:var(--primary)}
+.report-card .form-group{margin-bottom:16px}
+.report-card label{display:block;font-size:.85rem;font-weight:600;color:var(--text-light);margin-bottom:6px}
+.report-card input{width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-size:.9rem;font-family:inherit}
+.report-card input:focus{outline:none;border-color:var(--primary)}
+/* 状态指示器 */
+.agent-status{display:flex;align-items:center;gap:6px;font-size:.78rem;color:var(--text-light);margin-bottom:8px}
+.status-dot{width:8px;height:8px;border-radius:50%;background:#34D399}
+.status-dot.off{background:#F87171}
+/* 加载动画 */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* 响应式 */
+@media(max-width:1024px){
+  .overview-cards{grid-template-columns:repeat(2,1fr)}
+  .dash-grid{grid-template-columns:1fr}
+  .qa-layout{grid-template-columns:1fr}
+}
+@media(max-width:640px){
+  .overview-cards{grid-template-columns:1fr}
+  .nav-tab{padding:0 12px;font-size:.82rem}
+}
+
+/* Markdown 渲染样式 */
+.msg-bubble.markdown-body{line-height:1.75}
+.msg-bubble.markdown-body h2{font-size:1.05rem;color:var(--primary);border-bottom:1px solid var(--primary-light);padding-bottom:4px;margin:12px 0 6px}
+.msg-bubble.markdown-body h3{font-size:.95rem;color:var(--primary-dark);margin:10px 0 4px}
+.msg-bubble.markdown-body table{width:100%;border-collapse:collapse;margin:8px 0;font-size:.8rem}
+.msg-bubble.markdown-body th,.msg-bubble.markdown-body td{border:1px solid #ddd;padding:5px 8px;text-align:left}
+.msg-bubble.markdown-body th{background:var(--primary-light);font-weight:600}
+.msg-bubble.markdown-body blockquote{border-left:3px solid var(--primary);margin:6px 0;padding:4px 10px;background:var(--primary-light);border-radius:0 4px 4px 0}
+.msg-bubble.markdown-body code{background:#f0f0f0;padding:1px 4px;border-radius:3px;font-size:.8rem}
+.msg-bubble.markdown-body pre{background:#f5f5f5;padding:10px;border-radius:6px;overflow-x:auto;font-size:.8rem}
+.msg-bubble.markdown-body ul,.msg-bubble.markdown-body ol{padding-left:18px;margin:4px 0}
+.msg-bubble.markdown-body p{margin:4px 0}
+.msg-bubble.markdown-body hr{border:none;border-top:1px solid var(--border);margin:10px 0}
+/* 进度指示器 */
+.progress-row{display:flex;align-items:center;gap:6px;padding:4px 0;font-size:.78rem;color:var(--text-light)}
+.progress-step{display:flex;align-items:center;gap:4px}
+.progress-step .step-icon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.6rem}
+.progress-step.done .step-icon{background:#34D399;color:#fff}
+.progress-step.active .step-icon{background:var(--primary);color:#fff;animation:pulse 1s infinite}
+.progress-step.wait .step-icon{background:#E5E7EB;color:#9CA3AF}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+</style>
+</head>
+<body>
+
+<!-- ========== 顶部导航 ========== -->
+<header class="header">
+  <div class="logo"><span class="icon">⚖️</span>法眼AI 2.0</div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('dashboard')">
+      <span>📊</span> 数据仪表盘
+    </button>
+    <button class="nav-tab" onclick="switchTab('qa')">
+      <span>💬</span> 智能问答
+    </button>
+    <button class="nav-tab" onclick="switchTab('report')">
+      <span>📄</span> 报告生成
+    </button>
+  </nav>
+</header>
+
+<!-- ========== Tab: 数据仪表盘 ========== -->
+<div class="main">
+<div class="tab-content active" id="tab-dashboard">
+  <div class="overview-cards" id="overviewCards"></div>
+  <div class="dash-grid">
+    <div class="dash-panel"><h3>📋 案由分布 Top 15</h3><div class="dash-chart" id="chartCaseType"></div></div>
+    <div class="dash-panel"><h3>⚖️ 案件大类分布</h3><div class="dash-chart" id="chartCategory"></div></div>
+    <div class="dash-panel"><h3>🏷️ 判决结果分布</h3><div class="dash-chart" id="chartJudgment"></div></div>
+    <div class="dash-panel"><h3>📏 案例描述长度分布</h3><div class="dash-chart" id="chartLength"></div></div>
+    <div class="dash-panel dash-full"><h3>🔗 关键词共现网络</h3><div class="dash-chart-lg" id="chartNetwork"></div></div>
+    <div class="dash-panel"><h3>🔥 高频关键词 Top 25</h3><div class="dash-chart" id="chartKeywords"></div></div>
+    <div class="dash-panel"><h3>☁️ 关键词词云</h3><div class="dash-chart" id="chartWordCloud"></div></div>
+  </div>
+</div>
+
+<!-- ========== Tab: 智能问答 ========== -->
+<div class="tab-content" id="tab-qa">
+  <div class="qa-layout">
+    <div class="qa-main">
+      <div class="qa-card">
+        <div class="agent-status">
+          <span class="status-dot" id="agentDot"></span>
+          <span id="agentStatusText">Agent 就绪</span>
+        </div>
+        <div class="chat-area" id="chatArea">
+          <div class="chat-msg assistant">
+            <div class="msg-bubble">
+              👋 您好！我是<strong>法眼AI 2.0 多Agent协作系统</strong>。我由三个专业Agent组成：<br>
+              🔍 <strong>检索Agent</strong>：从 10,000+ 案例库中搜索相似案例<br>
+              🧠 <strong>分析Agent</strong>：基于检索结果进行法律分析<br>
+              ✅ <strong>校验Agent</strong>：事实核查，确保引用准确<br><br>
+              请输入您的法律问题，我会为您检索相似案例并进行分析。
+            </div>
+          </div>
+        </div>
+        <div class="input-row">
+          <textarea id="qaInput" placeholder="输入法律问题，例如：民间借贷纠纷中借条丢失怎么办？" rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+          <button class="btn btn-primary" id="sendBtn" onclick="sendMessage()">
+            <span id="sendIcon">📤</span> 发送
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="qa-sidebar">
+      <div class="side-card">
+        <h4>📂 检索到的案例</h4>
+        <div id="retrievedCases">等待查询...</div>
+      </div>
+      <div class="side-card">
+        <h4>🔬 Agent 执行链路</h4>
+        <div id="agentTrace" style="font-size:.8rem;color:var(--text-light)">等待查询...</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========== Tab: 报告生成 ========== -->
+<div class="tab-content" id="tab-report">
+  <div class="report-area">
+    <div class="report-card">
+      <h2>📄 生成分析报告</h2>
+      <div class="form-group">
+        <label>报告标题</label>
+        <input type="text" id="reportTitle" value="法眼AI 案例分析报告" placeholder="输入报告标题">
+      </div>
+      <p style="color:var(--text-light);font-size:.85rem;margin-bottom:20px">
+        报告包含：数据概览、案由分布、判决结果统计、高频关键词分析。基于 {total_cases} 条裁判文书数据。
+      </p>
+      <button class="btn btn-primary" onclick="generateReport()">
+        📥 生成并下载报告
+      </button>
+      <button class="btn btn-outline" style="margin-left:10px" onclick="generateReport(true)">
+        🖨️ 在线预览报告
+      </button>
+      <div id="reportPreview" style="margin-top:20px"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+// ============================================================
+// 全局状态
+// ============================================================
+let totalCases = 0;
+let chatHistory = [];
+let charts = {};
+
+// ============================================================
+// Tab 切换
+// ============================================================
+function switchTab(name) {
+  document.querySelectorAll('.nav-tab').forEach((t,i) => {
+    t.classList.toggle('active', t.textContent.includes(
+      name==='dashboard'?'仪表盘':name==='qa'?'问答':'报告'));
+  });
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  // 切换时 resize 图表
+  setTimeout(() => Object.values(charts).forEach(c => c && c.resize()), 200);
+}
+
+// ============================================================
+// 仪表盘
+// ============================================================
+async function loadDashboard() {
+  try {
+    const resp = await fetch('/api/dashboard/all');
+    const data = await resp.json();
+    totalCases = data.overview.total_cases;
+
+    // 概览卡片
+    document.getElementById('overviewCards').innerHTML = [
+      {num:data.overview.total_cases.toLocaleString(),label:'案例总数',icon:'📚'},
+      {num:data.overview.civil_count.toLocaleString(),label:'民事案件',icon:'⚖️'},
+      {num:data.overview.criminal_count.toLocaleString(),label:'刑事案件',icon:'🔒'},
+      {num:data.overview.case_types_count,label:'案由类型',icon:'📋'},
+    ].map(c => `<div class="ov-card"><div class="num">${c.icon} ${c.num}</div><div class="label">${c.label}</div></div>`).join('');
+
+    // 案由分布
+    initChart('chartCaseType', {
+      tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+      grid:{left:120,right:20,top:10,bottom:10},
+      xAxis:{type:'value'},
+      yAxis:{type:'category',data:data.case_type_dist.slice(0,15).map(d=>d.name).reverse(),
+             axisLabel:{fontSize:11}},
+      series:[{type:'bar',data:data.case_type_dist.slice(0,15).map(d=>d.value).reverse(),
+               itemStyle:{color:new echarts.graphic.LinearGradient(0,0,1,0,[
+                 {offset:0,color:'#FCA5A5'},{offset:1,color:'#7F1D1D'}])},
+               barMaxWidth:24}]
+    });
+
+    // 大类分布
+    initChart('chartCategory', {
+      tooltip:{trigger:'item'},
+      series:[{type:'pie',radius:['45%','75%'],center:['50%','50%'],
+               itemStyle:{borderRadius:6,borderColor:'#fff',borderWidth:3},
+               label:{show:true,formatter:'{b}\n{d}%'},
+               data:data.category_dist,
+               color:['#7F1D1D','#DC2626','#F87171','#FCA5A5']}]
+    });
+
+    // 判决结果
+    initChart('chartJudgment', {
+      tooltip:{trigger:'item'},
+      series:[{type:'pie',radius:'65%',center:['50%','50%'],
+               itemStyle:{borderRadius:4,borderColor:'#fff',borderWidth:3},
+               label:{show:true,formatter:'{b}: {c}'},
+               data:data.judgment_dist,
+               color:['#34D399','#60A5FA','#FBBF24','#F87171','#A78BFA','#9CA3AF']}]
+    });
+
+    // 长度分布
+    initChart('chartLength', {
+      tooltip:{trigger:'axis'},
+      grid:{left:60,right:20,top:10,bottom:30},
+      xAxis:{type:'category',data:data.length_dist.map(d=>d.name),axisLabel:{fontSize:10,rotate:15}},
+      yAxis:{type:'value'},
+      series:[{type:'bar',data:data.length_dist.map(d=>d.value),
+               itemStyle:{color:'#7F1D1D',borderRadius:[6,6,0,0]},barMaxWidth:50}]
+    });
+
+    // 关键词共现网络
+    initChart('chartNetwork', {
+      tooltip:{},
+      series:[{type:'graph',layout:'force',force:{repulsion:200,edgeLength:[80,200]},
+               roam:true,draggable:true,
+               data:data.keyword_network.nodes.map(n=>({...n,symbolSize:Math.min(50,Math.max(15,n.symbolSize))})),
+               links:data.keyword_network.links.filter(l=>l.value>3).slice(0,80),
+               lineStyle:{color:'#ddd',curveness:0.2,opacity:0.5},
+               label:{show:true,fontSize:10},emphasis:{focus:'adjacency',lineStyle:{width:3}}}]
+    });
+
+    // 关键词柱状图
+    initChart('chartKeywords', {
+      tooltip:{trigger:'axis',axisPointer:{type:'shadow'}},
+      grid:{left:100,right:20,top:10,bottom:10},
+      xAxis:{type:'value'},
+      yAxis:{type:'category',data:data.top_keywords.slice(0,25).map(d=>d.name).reverse(),
+             axisLabel:{fontSize:10}},
+      series:[{type:'bar',data:data.top_keywords.slice(0,25).map(d=>d.value).reverse(),
+               itemStyle:{color:'#DC2626'},barMaxWidth:18}]
+    });
+
+    // 词云（用 scatter 模拟）
+    var kwData = data.top_keywords.slice(0,40).map(d=>({
+      name:d.name,value:d.value
+    }));
+    initChart('chartWordCloud', {
+      tooltip:{},
+      series:[{type:'wordCloud',
+               shape:'diamond',width:'100%',height:'100%',
+               sizeRange:[14,50],rotationRange:[-45,45],
+               textStyle:{fontFamily:'PingFang SC,Microsoft YaHei,sans-serif',
+                          color:function(){return ['#7F1D1D','#DC2626','#F87171','#B91C1C','#991B1B','#EF4444'][Math.floor(Math.random()*6)]}},
+               data:kwData}]
+    });
+
+  } catch(e) {
+    console.error('仪表盘加载失败:', e);
+  }
+}
+
+function initChart(id, option) {
+  var dom = document.getElementById(id);
+  if (!dom) return;
+  if (charts[id]) charts[id].dispose();
+  var chart = echarts.init(dom);
+  chart.setOption(option);
+  charts[id] = chart;
+  return chart;
+}
+
+// ============================================================
+// 智能问答
+// ============================================================
+// Markdown 渲染
+function renderMD(text) {
+  if (typeof marked !== 'undefined') {
+    marked.setOptions({breaks:true, gfm:true});
+    return marked.parse(text);
+  }
+  return text.replace(/\n/g,'<br>');
+}
+
+async function sendMessage() {
+  var input = document.getElementById('qaInput');
+  var query = input.value.trim();
+  if (!query) return;
+
+  appendMessage('user', query);
+  input.value = '';
+  document.getElementById('sendBtn').disabled = true;
+  document.getElementById('sendIcon').textContent = '⏳';
+
+  // 创建进度条和 AI 回复框
+  var msgId = 'msg-' + Date.now();
+  var area = document.getElementById('chatArea');
+  var div = document.createElement('div');
+  div.id = msgId;
+  div.className = 'chat-msg assistant';
+  div.innerHTML = '<div class="msg-bubble markdown-body">' +
+    '<div class="progress-row" id="'+msgId+'-progress">' +
+    '<span class="progress-step active" id="step-intent"><span class="step-icon">🔍</span>识别意图</span>' +
+    '<span style="color:#ddd">→</span>' +
+    '<span class="progress-step wait" id="step-retrieve"><span class="step-icon">📂</span>检索案例</span>' +
+    '<span style="color:#ddd">→</span>' +
+    '<span class="progress-step wait" id="step-analyze"><span class="step-icon">🧠</span>分析</span>' +
+    '<span style="color:#ddd">→</span>' +
+    '<span class="progress-step wait" id="step-verify"><span class="step-icon">✅</span>校验</span>' +
+    '</div>' +
+    '<div id="'+msgId+'-content" style="margin-top:8px;color:var(--text-light);font-style:italic">等待响应...</div>' +
+    '</div>' +
+    '<div class="msg-meta">' + new Date().toLocaleTimeString() + '</div>';
+  area.appendChild(div);
+  scrollChat();
+
+  var answerText = '';
+
+  try {
+    var resp = await fetch('/api/agent/chat/stream', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({query:query, history:chatHistory})
+    });
+
+    var reader = resp.body.getReader();
+    var decoder = new TextDecoder();
+    var buffer = '';
+
+    while (true) {
+      var {done, value} = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, {stream:true});
+
+      var lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (var line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          var event = JSON.parse(line.slice(6));
+          handleSSE(event, msgId);
+          if (event.event === 'analyze' && event.data.status === 'streaming') {
+            answerText += event.data.chunk;
+            document.getElementById(msgId+'-content').innerHTML = renderMD(answerText);
+            scrollChat();
+          }
+        } catch(e) { console.warn('SSE parse:', e); }
+      }
+    }
+  } catch(e) {
+    document.getElementById(msgId+'-content').innerHTML = '❌ 服务不可用: ' + e.message;
+  }
+
+  // 最后渲染
+  document.getElementById(msgId+'-content').innerHTML = renderMD(answerText);
+  document.getElementById(msgId+'-progress').style.display = 'none';
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendIcon').textContent = '📤';
+  chatHistory.push({role:'user',content:query});
+  chatHistory.push({role:'assistant',content:answerText});
+  scrollChat();
+}
+
+function handleSSE(event, msgId) {
+  var stepMap = {intent:'intent',retrieve:'retrieve',analyze:'analyze',verify:'verify'};
+  var stepEl = document.getElementById('step-' + stepMap[event.event]);
+  var contentEl = document.getElementById(msgId+'-content');
+
+  if (event.event === 'done') {
+    // 最终状态：更新侧边栏
+    var data = event.data;
+    document.getElementById('agentTrace').innerHTML =
+      '<span style="color:#7F1D1D;font-weight:600">🔗 ' + data.agent_trace + '</span>';
+    var casesHtml = data.cases && data.cases.length > 0
+      ? data.cases.map(c =>
+          '<div class="case-item">' +
+          '<span class="case-score">'+(c.score*100).toFixed(1)+'%</span>' +
+          '<div class="case-name">'+c.filename+'</div>' +
+          '<div class="case-desc">'+(c.desc||'').substring(0,100)+'</div>' +
+          '</div>').join('')
+      : '<div style="color:var(--text-light)">无匹配案例</div>';
+    document.getElementById('retrievedCases').innerHTML = casesHtml;
+    return;
+  }
+
+  if (event.event === 'intent' && event.data.status === 'done') {
+    if (stepEl) { stepEl.className = 'progress-step done'; }
+  }
+
+  if (event.event === 'retrieve') {
+    if (event.data.status === 'done') {
+      if (stepEl) { stepEl.className = 'progress-step done'; }
+      // 更新侧边栏案例
+      var cases = event.data.cases || [];
+      document.getElementById('retrievedCases').innerHTML = cases.length > 0
+        ? cases.map(c => '<div class="case-item">' +
+            '<span class="case-score">'+(c.score*100).toFixed(1)+'%</span>' +
+            '<div class="case-name">'+c.filename+'</div>' +
+            '<div class="case-desc">'+(c.desc||'').substring(0,80)+'</div>' +
+            '</div>').join('')
+        : '<div style="color:var(--text-light)">无匹配案例</div>';
+    } else if (event.data.status === 'skipped') {
+      if (stepEl) { stepEl.innerHTML = '<span class="step-icon">⏭️</span>跳过'; stepEl.className = 'progress-step done'; }
+    }
+    // Activate analyze step
+    var analyzeEl = document.getElementById('step-analyze');
+    if (analyzeEl && event.data.status !== 'skipped') { analyzeEl.className = 'progress-step active'; }
+  }
+
+  if (event.event === 'analyze') {
+    if (event.data.status === 'streaming') {
+      if (contentEl && contentEl.textContent === '等待响应...') {
+        contentEl.innerHTML = '';
+        contentEl.style.fontStyle = 'normal';
+        contentEl.style.color = '';
+      }
+      // Activate next steps
+      if (stepEl) { stepEl.className = 'progress-step active'; }
+    } else if (event.data.status === 'done') {
+      if (stepEl) { stepEl.className = 'progress-step done'; }
+      var verEl = document.getElementById('step-verify');
+      if (verEl) { verEl.className = 'progress-step active'; }
+    }
+  }
+
+  if (event.event === 'verify' && event.data.status === 'done') {
+    if (stepEl) { stepEl.className = 'progress-step done'; }
+    var conf = event.data.verification.confidence || 80;
+    if (stepEl) { stepEl.innerHTML = '<span class="step-icon">✅</span>校验('+conf+'%)'; }
+  }
+}
+
+function appendMessage(role, content, isTemp) {
+  var area = document.getElementById('chatArea');
+  var div = document.createElement('div');
+  var id = 'msg-' + Date.now();
+  div.id = id;
+  div.className = 'chat-msg ' + role;
+  div.innerHTML = '<div class="msg-bubble">' + content + '</div>' +
+    '<div class="msg-meta">' + new Date().toLocaleTimeString() + '</div>';
+  area.appendChild(div);
+  scrollChat();
+  return id;
+}
+
+function removeMessage(id) {
+  var el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+function scrollChat() {
+  var area = document.getElementById('chatArea');
+  setTimeout(() => area.scrollTop = area.scrollHeight, 100);
+}
+
+// ============================================================
+// 报告生成
+// ============================================================
+async function generateReport(preview) {
+  var title = document.getElementById('reportTitle').value || '法眼AI 案例分析报告';
+  try {
+    var resp = await fetch('/api/report/generate', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({title:title})
+    });
+
+    if (preview) {
+      var html = await resp.text();
+      document.getElementById('reportPreview').innerHTML =
+        '<iframe srcdoc="'+html.replace(/"/g,'&quot;').replace(/\n/g,'')+
+        '" style="width:100%;height:600px;border:1px solid #ddd;border-radius:8px"></iframe>';
+    } else {
+      var blob = await resp.blob();
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = title.replace(/\s/g,'_') + '.html';
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+  } catch(e) {
+    alert('报告生成失败: ' + e.message);
+  }
+}
+
+// ============================================================
+// 初始化
+// ============================================================
+window.addEventListener('load', function() {
+  loadDashboard();
+  loadHealth();
+});
+
+window.addEventListener('resize', function() {
+  Object.values(charts).forEach(c => c && c.resize());
+});
+
+async function loadHealth() {
+  try {
+    var resp = await fetch('/api/agent/health');
+    var data = await resp.json();
+    if (data.status === 'ok') {
+      document.getElementById('agentDot').classList.remove('off');
+      document.getElementById('agentStatusText').textContent = '多Agent就绪';
+    }
+  } catch(e) {
+    document.getElementById('agentDot').classList.add('off');
+    document.getElementById('agentStatusText').textContent = 'Agent未连接';
+  }
+}
+
+// 更新报告页中的案例总数
+setTimeout(() => {
+  var placeholder = document.querySelector('#tab-report p');
+  if (placeholder && totalCases) {
+    placeholder.textContent = placeholder.textContent.replace('{total_cases}', totalCases.toLocaleString());
+  }
+}, 1500);
+</script>
+
+</body>
+</html>

@@ -72,6 +72,13 @@ class BM25SearchEngine {
         docFreq.set(t, (docFreq.get(t) || 0) + 1);
       }
       
+      // 预计算 TF 表 (accelerates BM25)
+      const tfMap = new Map();
+      for (const t of tokens) {
+        tfMap.set(t, (tfMap.get(t) || 0) + 1);
+      }
+      if (!this.docTFs) this.docTFs = [];
+      this.docTFs.push(tfMap);
       this.docTokens.push(tokens);
       this.docLengths.push(tokens.length);
     }
@@ -86,7 +93,96 @@ class BM25SearchEngine {
     const totalLen = this.docLengths.reduce((a, b) => a + b, 0);
     this.avgDocLen = totalLen / N;
     
+    // 构建倒排索引（加速检索）
+    this.inverted = new Map();
+    for (let i = 0; i < this.docTokens.length; i++) {
+      const tokens = this.docTokens[i];
+      const seen = new Set();
+      for (const t of tokens) {
+        if (!seen.has(t)) {
+          seen.add(t);
+          if (!this.inverted.has(t)) this.inverted.set(t, []);
+          this.inverted.get(t).push(i);
+        }
+      }
+    }
+    
     console.log(`  索引构建完成: ${N} 文档, ${this.idf.size} 唯一 token, 平均长度 ${this.avgDocLen.toFixed(0)}`);
+  }
+
+  // 序列化索引到磁盘（加速重启）
+  saveToDisk(filePath) {
+    // 只存 IDF+长度（docTokens 在首次搜索时懒构建）
+    const data = {
+      inverted: this.inverted ? [...this.inverted] : [],
+      docTFs: this.docTFs ? this.docTFs.map(m => [...m]) : [],
+      docLengths: this.docLengths,
+      avgDocLen: this.avgDocLen,
+      idf: [...this.idf],
+      totalDocs: this.totalDocs,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(data));
+    console.log('  索引已缓存到 ' + path.basename(filePath) + ' (' + (JSON.stringify(data).length/1024/1024).toFixed(1) + ' MB)');
+  }
+
+  // 从磁盘加载索引
+  loadFromDisk(filePath, docs) {
+    if (!fs.existsSync(filePath)) return false;
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      this.docLengths = data.docLengths;
+      this.avgDocLen = data.avgDocLen;
+      this.idf = new Map(data.idf);
+      this.totalDocs = data.totalDocs;
+      this.documents = docs;
+      this.docTFs = data.docTFs ? data.docTFs.map(arr => new Map(arr)) : null;
+      this.docTokens = data.docTokens || null;
+      this.inverted = data.inverted ? new Map(data.inverted) : null;
+      return true;
+    } catch (e) {
+      console.warn('  缓存损坏，重建:', e.message);
+      return false;
+    }
+  }
+
+  // 异步构建 token 索引（不阻塞事件循环）
+  _buildTokensAsync() {
+    if (this.docTokens || this._buildingTokens) return;
+    this._buildingTokens = true;
+    const self = this;
+    const docs = this.documents;
+    let i = 0;
+    const tokens = [];
+    function nextBatch() {
+      const end = Math.min(i + 100, docs.length);
+      for (; i < end; i++) {
+        tokens[i] = bigramTokenize(self._buildSearchText(docs[i]));
+      }
+      if (i < docs.length) {
+        setImmediate(nextBatch);
+      } else {
+        self.docTokens = tokens;
+        self._buildingTokens = false;
+        console.log('  🔧 token 索引构建完成 (' + tokens.length + ' 文档)');
+      }
+    }
+    setImmediate(nextBatch);
+  }
+  
+  // 确保 docTokens 已构建
+  _ensureTokens() {
+    if (this.docTokens) return;
+    console.log('  🔧 正在构建 token 索引...');
+    this.docTokens = new Array(this.documents.length);
+    this.docTFs = new Array(this.documents.length);
+    for (let i = 0; i < this.documents.length; i++) {
+      const tokens = bigramTokenize(this._buildSearchText(this.documents[i]));
+      this.docTokens[i] = tokens;
+      const tfMap = new Map();
+      for (const t of tokens) tfMap.set(t, (tfMap.get(t) || 0) + 1);
+      this.docTFs[i] = tfMap;
+    }
+    console.log('  ✅ token 索引就绪');
   }
 
   _buildSearchText(doc) {
@@ -101,12 +197,251 @@ class BM25SearchEngine {
   }
 
   search(query, topK = 5) {
+    this._ensureTokens();
+    const startTime = Date.now();
+    const queryTokens = bigramTokenize(query).filter(t => t.length >= 2);
+    if (queryTokens.length === 0) return [];
+    
+    const N = this.totalDocs;
+    const scores = new Array(N).fill(0);
+    const docTFs = this.docTFs;
+    
+    // 对每个查询token，只在含该token的文档上累加分数
+    for (let qi = 0; qi < queryTokens.length; qi++) {
+      const qt = queryTokens[qi];
+      const idf = this.idf.get(qt) || 0;
+      if (idf === 0) continue;
+      for (let i = 0; i < N; i++) {
+        const tf = docTFs[i]?.get(qt) || 0;
+        if (tf === 0) continue;
+        const docLen = this.docLengths[i];
+        scores[i] += idf * (tf * 2.5) / (tf + 1.5 * (0.25 + 0.75 * docLen / this.avgDocLen));
+      }
+    }
+    
+    // 取topK
+    const result = [];
+    for (let i = 0; i < N; i++) {
+      if (scores[i] > 0) result.push({ index: i, score: scores[i] });
+    }
+    result.sort((a, b) => b.score - a.score);
+    const maxScore = result.length > 0 ? result[0].score : 1;
+    
+    console.log('\n  ⚡ 检索完成: ' + (Date.now() - startTime) + 'ms, ' + result.length + ' 候选');
+    return result.slice(0, topK).map(s => ({
+      case: this.documents[s.index],
+      score: s.score / maxScore,
+    }));
+  }
+
+  _oldSearchPlaceholder(query, topK) {
+    this._ensureTokens();
+    const queryTokens = bigramTokenize(query);
+// ╔══════════════════════════════════════════════════════════╗
+// ║  法眼AI v2 · 全功能 Node.js 服务器                        ║
+// ║  优化: Bigram分词 + BM25检索 + 结构化Prompt + 10K案例库   ║
+// ╚══════════════════════════════════════════════════════════╝
+
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const path = require('path');
+
+const PORT = 5099;
+const BASE = __dirname;
+const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY || "sk-eb33ed735f444009abc1575f4a010c81";
+const DEEPSEEK_BASE_URL = "https://api.deepseek.com/v1";
+const MODEL = "deepseek-chat";
+
+// ═══════════════════════════════════════════════════════
+//  中文 Bigram 分词器（无需 jieba）
+// ═══════════════════════════════════════════════════════
+function bigramTokenize(text) {
+  if (!text) return [];
+  // 清理文本
+  const cleaned = text.replace(/[^\u4e00-\u9fff\w]/g, ' ').replace(/\s+/g, ' ').trim();
+  const tokens = [];
+  // Bigram: 相邻字符对
+  for (let i = 0; i < cleaned.length - 1; i++) {
+    const ch1 = cleaned[i], ch2 = cleaned[i + 1];
+    if (ch1 !== ' ' && ch2 !== ' ') {
+      tokens.push(ch1 + ch2);
+    }
+  }
+  // 也加入单字（处理奇数字符）
+  for (const ch of cleaned) {
+    if (ch !== ' ') tokens.push(ch);
+  }
+  // 提取连续汉字词（2-4字）
+  const wordMatches = cleaned.match(/[\u4e00-\u9fff]{2,4}/g);
+  if (wordMatches) tokens.push(...wordMatches);
+  
+  return tokens;
+}
+
+// ═══════════════════════════════════════════════════════
+//  BM25 检索引擎
+// ═══════════════════════════════════════════════════════
+class BM25SearchEngine {
+  constructor() {
+    this.documents = [];       // 原始案例
+    this.docTokens = [];       // 每个文档的 token 列表
+    this.docLengths = [];      // 每个文档的 token 数
+    this.avgDocLen = 0;
+    this.idf = new Map();      // token -> IDF 值
+    this.totalDocs = 0;
+    this.k1 = 1.5;  // BM25 参数
+    this.b = 0.75;
+  }
+
+  addDocuments(docs) {
+    this.documents = docs;
+    this.totalDocs = docs.length;
+    
+    // 1. Tokenize all documents
+    const docFreq = new Map(); // token -> 出现文档数
+    
+    for (let i = 0; i < docs.length; i++) {
+      const searchText = this._buildSearchText(docs[i]);
+      const tokens = bigramTokenize(searchText);
+      
+      // 去重统计 DF
+      const uniqueTokens = new Set(tokens);
+      for (const t of uniqueTokens) {
+        docFreq.set(t, (docFreq.get(t) || 0) + 1);
+      }
+      
+      // 预计算 TF 表 (accelerates BM25)
+      const tfMap = new Map();
+      for (const t of tokens) {
+        tfMap.set(t, (tfMap.get(t) || 0) + 1);
+      }
+      if (!this.docTFs) this.docTFs = [];
+      this.docTFs.push(tfMap);
+      this.docTokens.push(tokens);
+      this.docLengths.push(tokens.length);
+    }
+    
+    // 2. 计算 IDF
+    const N = this.totalDocs;
+    for (const [token, df] of docFreq) {
+      this.idf.set(token, Math.log((N - df + 0.5) / (df + 0.5) + 1));
+    }
+    
+    // 3. 平均文档长度
+    const totalLen = this.docLengths.reduce((a, b) => a + b, 0);
+    this.avgDocLen = totalLen / N;
+    
+    // 构建倒排索引（加速检索）
+    this.inverted = new Map();
+    for (let i = 0; i < this.docTokens.length; i++) {
+      const tokens = this.docTokens[i];
+      const seen = new Set();
+      for (const t of tokens) {
+        if (!seen.has(t)) {
+          seen.add(t);
+          if (!this.inverted.has(t)) this.inverted.set(t, []);
+          this.inverted.get(t).push(i);
+        }
+      }
+    }
+    
+    console.log(`  索引构建完成: ${N} 文档, ${this.idf.size} 唯一 token, 平均长度 ${this.avgDocLen.toFixed(0)}`);
+  }
+
+  // 序列化索引到磁盘（加速重启）
+  saveToDisk(filePath) {
+    // 只存 IDF+长度（docTokens 在首次搜索时懒构建）
+    const data = {
+      inverted: this.inverted ? [...this.inverted] : [],
+      docTFs: this.docTFs ? this.docTFs.map(m => [...m]) : [],
+      docLengths: this.docLengths,
+      avgDocLen: this.avgDocLen,
+      idf: [...this.idf],
+      totalDocs: this.totalDocs,
+    };
+    fs.writeFileSync(filePath, JSON.stringify(data));
+    console.log('  索引已缓存到 ' + path.basename(filePath) + ' (' + (JSON.stringify(data).length/1024/1024).toFixed(1) + ' MB)');
+  }
+
+  // 从磁盘加载索引
+  loadFromDisk(filePath, docs) {
+    if (!fs.existsSync(filePath)) return false;
+    try {
+      const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+      this.docLengths = data.docLengths;
+      this.avgDocLen = data.avgDocLen;
+      this.idf = new Map(data.idf);
+      this.totalDocs = data.totalDocs;
+      this.documents = docs;
+      this.docTFs = data.docTFs ? data.docTFs.map(arr => new Map(arr)) : null;
+      this.docTokens = data.docTokens || null;
+      this.inverted = data.inverted ? new Map(data.inverted) : null;
+      return true;
+    } catch (e) {
+      console.warn('  缓存损坏，重建:', e.message);
+      return false;
+    }
+  }
+
+  // 异步构建 token 索引（不阻塞事件循环）
+  _buildTokensAsync() {
+    if (this.docTokens || this._buildingTokens) return;
+    this._buildingTokens = true;
+    const self = this;
+    const docs = this.documents;
+    let i = 0;
+    const tokens = [];
+    function nextBatch() {
+      const end = Math.min(i + 100, docs.length);
+      for (; i < end; i++) {
+        tokens[i] = bigramTokenize(self._buildSearchText(docs[i]));
+      }
+      if (i < docs.length) {
+        setImmediate(nextBatch);
+      } else {
+        self.docTokens = tokens;
+        self._buildingTokens = false;
+        console.log('  🔧 token 索引构建完成 (' + tokens.length + ' 文档)');
+      }
+    }
+    setImmediate(nextBatch);
+  }
+  
+  // 确保 docTokens 已构建
+  _ensureTokens() {
+    if (this.docTokens) return;
+    console.log('  🔧 正在构建 token 索引...');
+    this.docTokens = new Array(this.documents.length);
+    this.docTFs = new Array(this.documents.length);
+    for (let i = 0; i < this.documents.length; i++) {
+      const tokens = bigramTokenize(this._buildSearchText(this.documents[i]));
+      this.docTokens[i] = tokens;
+      const tfMap = new Map();
+      for (const t of tokens) tfMap.set(t, (tfMap.get(t) || 0) + 1);
+      this.docTFs[i] = tfMap;
+    }
+    console.log('  ✅ token 索引就绪');
+  }
+
+  _buildSearchText(doc) {
+    const parts = [
+      (doc.title || '').repeat ? (doc.title || '').repeat(3) : (doc.title || ''),
+      (doc.metadata?.keywords || []).join(' ').repeat ? (doc.metadata?.keywords || []).join(' ').repeat(2) : (doc.metadata?.keywords || []).join(' '),
+      (doc.metadata?.ruling_points || '').repeat ? (doc.metadata?.ruling_points || '').repeat(2) : (doc.metadata?.ruling_points || ''),
+      doc.cause_of_action || '',
+      doc.content || '',
+    ];
+    return parts.filter(p => typeof p === 'string').join(' ');
+  }
+
+  search(query, topK = 5) {
+    this._ensureTokens();
     const queryTokens = bigramTokenize(query);
     if (queryTokens.length === 0) return [];
     
     const scores = [];
     
-    for (let i = 0; i < this.totalDocs; i++) {
       let score = 0;
       const docLen = this.docLengths[i];
       
@@ -151,30 +486,59 @@ let casesReady = false;
 
 function loadCases() {
   console.log('📚 加载案例库...');
+  const cacheDir = path.join(BASE, '..', 'extracted_cases', 'deduped', 'cache');
+  if (!fs.existsSync(cacheDir)) fs.mkdirSync(cacheDir, { recursive: true });
+
+  const civilCache = path.join(cacheDir, 'civil_index.json');
+  const criminalCache = path.join(cacheDir, 'criminal_index.json');
   const civilPath = path.join(BASE, '..', 'extracted_cases', 'deduped', 'civil_cases.json');
   const criminalPath = path.join(BASE, '..', 'extracted_cases', 'deduped', 'criminal_cases_new.json');
-  
+
   try {
+    // 民事
     if (fs.existsSync(civilPath)) {
-      const raw = fs.readFileSync(civilPath, 'utf-8');
-      const civilCases = JSON.parse(raw);
-      civilEngine.addDocuments(civilCases);
+      const rawCivil = fs.readFileSync(civilPath, 'utf-8');
+      const civilCases = JSON.parse(rawCivil);
+      const civilCacheOK = fs.existsSync(civilCache) && fs.statSync(civilCache).mtimeMs >= fs.statSync(civilPath).mtimeMs;
+
+      if (civilCacheOK && civilEngine.loadFromDisk(civilCache, civilCases)) {
+        console.log('  民事: ' + civilCases.length + ' 条 (缓存)');
+        console.log("  构建 token..."); civilEngine._ensureTokens();
+      } else {
+        console.log('  民事: 构建索引...');
+        civilEngine.addDocuments(civilCases);
+        civilEngine.saveToDisk(civilCache);
+        console.log('  民事: ' + civilCases.length + ' 条');
+      }
       allCases.push(...civilCases);
-      console.log(`  民事案例: ${civilCases.length} 条`);
     }
+
+    // 刑事
     if (fs.existsSync(criminalPath)) {
-      const raw = fs.readFileSync(criminalPath, 'utf-8');
-      const criminalCases = JSON.parse(raw);
-      criminalEngine.addDocuments(criminalCases);
+      const rawCriminal = fs.readFileSync(criminalPath, 'utf-8');
+      const criminalCases = JSON.parse(rawCriminal);
+      const criminalCacheOK = fs.existsSync(criminalCache) && fs.statSync(criminalCache).mtimeMs >= fs.statSync(criminalPath).mtimeMs;
+
+      if (criminalCacheOK && criminalEngine.loadFromDisk(criminalCache, criminalCases)) {
+        console.log('  刑事: ' + criminalCases.length + ' 条 (缓存)');
+        criminalEngine._ensureTokens();
+      } else {
+        console.log('  刑事: 构建索引...');
+        criminalEngine.addDocuments(criminalCases);
+        criminalEngine.saveToDisk(criminalCache);
+        console.log('  刑事: ' + criminalCases.length + ' 条');
+      }
       allCases.push(...criminalCases);
-      console.log(`  刑事案例: ${criminalCases.length} 条`);
     }
-    casesReady = true;
-    console.log(`✅ 总计 ${allCases.length} 条案例就绪`);
+
+    casesReady = allCases.length > 0;
+    console.log('总计 ' + allCases.length + ' 条案例就绪');
+
   } catch (e) {
     console.error('❌ 案例加载失败:', e.message);
   }
 }
+
 
 // ═══════════════════════════════════════════════════════
 //  案件分类器
@@ -202,18 +566,15 @@ function classifyCase(text) {
   else { caseType = "民事"; conf = 0.8; }
 
   return {
-    case_type: caseType,
-    amount: extractAmount(text),
+    case_type: caseType, amount: extractAmount(text), 
     party_count: extractPartyCount(text),
-    amount_reason: "",
-    party_count_reason: "",
+    amount_reason: "", party_count_reason: "",
     confidence: Math.round(conf * 100) / 100,
   };
 }
 
 function extractAmount(text) {
   let best = null;
-  // 匹配"XX万元"等
   const m1 = text.match(/(\d[\d,，.]*)\s*万\s*(?:元|块|圆)/);
   if (m1) best = parseFloat(m1[1].replace(/[,，]/g, '')) * 10000;
   const m2 = text.match(/(\d[\d,，.]*)\s*亿\s*(?:元|块|圆)/);
@@ -253,7 +614,13 @@ function judgeComplexity(amount, partyCount, hasEvidenceGap, hasCriminalCross) {
   return "low";
 }
 
-// ═══════════════════════════════════════════════════════
+function fmtAmount(val) {
+  if (!val) return '-';
+  if (val >= 1e8) return (val / 1e8).toFixed(1) + ' 亿元';
+  if (val >= 1e4) return (val / 1e4).toFixed(1) + ' 万元';
+  return val.toLocaleString() + ' 元';
+}
+
 //  MiniMax LLM 调用
 // ═══════════════════════════════════════════════════════
 function callMiniMax(messages, maxTokens = 2000) {
