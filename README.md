@@ -61,21 +61,25 @@
 
 ```bash
 # 1. 安装依赖
-pip install -r internship-tasks/task4-unified-platform/requirements.txt
-pip install markdown
+pip3 install fastapi uvicorn langgraph langchain langchain-openai   scikit-learn numpy jieba rank_bm25 python-dotenv markdown
 
-# 2. 设置 API Key
-cp .env.example .env
-# 编辑 .env 填入 MINIMAX_API_KEY
+# 2. 设置 API Key（在项目根目录创建 .env）
+echo 'MINIMAX_API_KEY=your_key_here' > internship-tasks/task4-unified-platform/.env
+echo 'MINIMAX_BASE_URL=https://api.minimax.chat/v1' >> internship-tasks/task4-unified-platform/.env
 
-# 3. 预计算数据
+# 3. 预计算仪表盘数据
 cd internship-tasks/task4-unified-platform
-python dashboard_data.py
+python3 dashboard_data.py
 
-# 4. 启动
-python -m uvicorn backend:app --host 0.0.0.0 --port 8800
-# 访问 http://localhost:8800
+# 4. 启动服务
+python3 backend.py
+
+# 5. 浏览器访问
+open http://localhost:8800
 ```
+
+> 💡 **后台持续运行**:   
+> 💡 **多模型评测**: 见 
 
 ### Docker 一键部署
 
