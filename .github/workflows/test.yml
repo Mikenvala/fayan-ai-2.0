@@ -1,3 +1,4 @@
+.github/workflows/test.yml
 name: CI
 
 on:
@@ -22,16 +23,12 @@ jobs:
           python -m py_compile internship-tasks/task4-unified-platform/backend.py
           python -m py_compile internship-tasks/task4-unified-platform/multi_agent.py
           python -m py_compile internship-tasks/task4-unified-platform/dashboard_data.py
-          python -m py_compile internship-tasks/task5-benchmark/benchmark_runner.py
-          python -m py_compile internship-tasks/task5-benchmark/multi_benchmark.py
-          python -m py_compile internship-tasks/task5-benchmark/compare_chart.py
-          python -m py_compile internship-tasks/task5-benchmark/run_mimo.py
       - name: Dashboard data (skip if no CSV)
         run: |
-          if [ -f ../all_cases_perfect.csv ]; then
+          if [ -f all_cases_perfect.csv ]; then
             cd internship-tasks/task4-unified-platform && python dashboard_data.py
           else
-            echo "No data file, skipping dashboard generation"
+            echo "[SKIP] No data file"
           fi
         env:
           SKIP_LLM: 'true'

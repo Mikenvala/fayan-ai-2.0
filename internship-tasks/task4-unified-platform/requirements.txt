@@ -10,3 +10,4 @@ rank_bm25>=0.2.0
 python-dotenv>=1.0.0
 aiofiles>=23.0.0
 python-multipart>=0.0.6
+matplotlib>=3.7.0
