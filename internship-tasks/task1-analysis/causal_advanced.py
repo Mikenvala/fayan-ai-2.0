@@ -26,10 +26,11 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
-heiti_path = '/System/Library/Fonts/STHeiti Light.ttc'
-if os.path.exists(heiti_path):
-    fm.fontManager.addfont(heiti_path)
-    plt.rcParams['font.sans-serif'] = ['Heiti TC']
+for heiti_path in ['/System/Library/Fonts/STHeiti Medium.ttc', '/System/Library/Fonts/STHeiti Light.ttc']:
+    if os.path.exists(heiti_path):
+        fm.fontManager.addfont(heiti_path)
+plt.rcParams['font.sans-serif'] = ['Heiti TC', 'STHeiti', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams.update({'figure.dpi': 150, 'savefig.dpi': 150, 'savefig.bbox': 'tight'})
 
@@ -592,153 +593,124 @@ def run_mediation(df):
 # 综合仪表盘
 # ============================================================
 def synthesis_dashboard(ros_res, cf_res, med_res):
-    """因果推断综合看板：Rosenbaum + 因果森林 + 中介"""
+    """因果推断综合看板 — FancyBboxPatch 框架图"""
     print("\n" + "=" * 70)
     print("  [D] 因果推断进阶综合看板")
     print("=" * 70)
 
-    fig = plt.figure(figsize=(22, 14))
-    gs = fig.add_gridspec(3, 3, hspace=0.4, wspace=0.35)
+    from matplotlib.patches import FancyBboxPatch
 
-    # (0,0): Rosenbaum
-    ax = fig.add_subplot(gs[0, 0])
-    ax.axis('off')
-    gamma_c = ros_res.get('gamma_critical', 'N/A') if ros_res else 'N/A'
-    rosen_text = f"""
-╔══════════════════════════════╗
-║  🔒 Rosenbaum 敏感性分析      ║
-╠══════════════════════════════╣
-║                              ║
-║  Γ_critical = {gamma_c}            ║
-║                              ║
-║  需要 Γ ≥ {gamma_c} 的         ║
-║  不可观测混淆才能推翻        ║
-║  "效应不显著"的结论         ║
-║                              ║
-║  Γ=2 意味着两个"相同"        ║
-║  案例的处理概率可差2倍      ║
-║                              ║
-║  结论: PSM结果对不可观测     ║
-║  混淆{('高度敏感' if isinstance(gamma_c,float) and gamma_c<2 else '具有鲁棒性') if gamma_c != 'N/A' else ''}│
-╚══════════════════════════════╝
-"""
-    ax.text(0.5, 0.5, rosen_text, transform=ax.transAxes, fontsize=8.5, fontfamily='monospace',
-            ha='center', va='center',
-            bbox=dict(boxstyle='round', facecolor='#FFF8F0', edgecolor=COLORS['primary']))
+    g_c = ros_res.get('gamma_critical', 'N/A') if ros_res else 'N/A'
+    robust = '具有鲁棒性' if (isinstance(g_c, float) and g_c >= 2) else '高度敏感'
+    DARK = '#1F2937'; RED = '#DC2626'; GREEN = '#059669'
 
-    # (0,1): 因果森林 ATE
-    ax = fig.add_subplot(gs[0, 1])
-    ax.axis('off')
-    cf_text = f"""
-╔══════════════════════════════╗
-║  🌲 因果森林 (Causal Forest) ║
-╠══════════════════════════════╣
-║                              ║
-║  ATE = {cf_res['ate_cf']*100:+.2f}pp                ║
-║  CATE SD = {cf_res['cate_std']*100:.3f}pp           ║
-║  显著异质性: {cf_res.get('sig_pct',0):.1f}%              ║
-║                              ║
-║  关键异质性来源:             ║
-║  1. 案件类型(民事/刑事/行政)║
-║  2. 案件篇幅                 ║
-║  3. 年份偏量                 ║
-║                              ║
-║  "平均不显著 ≠ 对所有人     ║
-║   都不显著":                 ║
-║   因果森林发现{cf_res.get('sig_pct',0):.0f}%样本有         ║
-║   显著的异质性处理效应      ║
-╚══════════════════════════════╝
-"""
-    ax.text(0.5, 0.5, cf_text, transform=ax.transAxes, fontsize=8.5, fontfamily='monospace',
-            ha='center', va='center',
-            bbox=dict(boxstyle='round', facecolor='#F0FFF0', edgecolor=COLORS['support']))
+    fig = plt.figure(figsize=(22, 15))
+    gs = fig.add_gridspec(4, 3, hspace=0.45, wspace=0.35, height_ratios=[1, 1, 0.7, 0.6])
 
-    # (0,2): 中介分析
-    ax = fig.add_subplot(gs[0, 2])
-    ax.axis('off')
-    med_items = []
+    # Panel 1: Rosenbaum
+    ax1 = fig.add_subplot(gs[0, 0])
+    ax1.set_xlim(0, 10); ax1.set_ylim(0, 10); ax1.axis('off')
+    tb = FancyBboxPatch((0.3, 7.5), 9.4, 2.0, boxstyle='round,pad=0.15', facecolor='#7F1D1D', edgecolor='#7F1D1D', linewidth=2, zorder=5)
+    ax1.add_patch(tb)
+    ax1.text(5, 8.5, 'Rosenbaum 敏感性分析', ha='center', va='center', fontsize=11, fontweight='bold', color='white', zorder=6)
+    cb = FancyBboxPatch((0.3, 0.5), 9.4, 7.2, boxstyle='round,pad=0.15', facecolor='#FFF8F0', edgecolor='#7F1D1D', linewidth=2, zorder=4)
+    ax1.add_patch(cb)
+    rlines = [
+        f'Γ_critical = {g_c}', '',
+        f'需要 Γ ≥ {g_c} 的不可观测混淆',
+        '才能推翻"效应不显著"结论', '',
+        'Γ=2 意味着两个"相同"案例',
+        '的处理概率可差 2 倍', '',
+        '结论: PSM 结论对不可观测',
+        f'混淆 {robust}',
+    ]
+    ax1.text(5, 3.8, chr(10).join(rlines), ha='center', va='center', fontsize=9.5, color=DARK, zorder=6)
+
+    # Panel 2: Causal Forest
+    ax2 = fig.add_subplot(gs[0, 1])
+    ax2.set_xlim(0, 10); ax2.set_ylim(0, 10); ax2.axis('off')
+    tb2 = FancyBboxPatch((0.3, 7.5), 9.4, 2.0, boxstyle='round,pad=0.15', facecolor='#059669', edgecolor='#059669', linewidth=2, zorder=5)
+    ax2.add_patch(tb2)
+    ax2.text(5, 8.5, 'Causal Forest', ha='center', va='center', fontsize=11, fontweight='bold', color='white', zorder=6)
+    cb2 = FancyBboxPatch((0.3, 0.5), 9.4, 7.2, boxstyle='round,pad=0.15', facecolor='#ECFDF5', edgecolor='#059669', linewidth=2, zorder=4)
+    ax2.add_patch(cb2)
+    rlines2 = [
+        f'ATE = {cf_res["ate_cf"]*100:+.2f}pp',
+        f'CATE SD = {cf_res["cate_std"]*100:.3f}pp',
+        f'显著异质性: {cf_res.get("sig_pct",0):.1f}% 样本', '',
+        '关键异质性来源:', '1. 案件类型 (民事/刑事/行政)',
+        '2. 案件篇幅', '3. 年份偏移量', '',
+        '"平均不显著 ≠ 对所有人',
+        f'都不显著": {cf_res.get("sig_pct",0):.0f}% 样本存在',
+        '显著的异质性处理效应',
+    ]
+    ax2.text(5, 3.8, chr(10).join(rlines2), ha='center', va='center', fontsize=9.5, color=DARK, zorder=6)
+
+    # Panel 3: Mediation
+    ax3 = fig.add_subplot(gs[0, 2])
+    ax3.set_xlim(0, 10); ax3.set_ylim(0, 10); ax3.axis('off')
+    tb3 = FancyBboxPatch((0.3, 7.5), 9.4, 2.0, boxstyle='round,pad=0.15', facecolor='#D97706', edgecolor='#D97706', linewidth=2, zorder=5)
+    ax3.add_patch(tb3)
+    ax3.text(5, 8.5, 'Causal Mediation', ha='center', va='center', fontsize=11, fontweight='bold', color='white', zorder=6)
+    cb3 = FancyBboxPatch((0.3, 0.5), 9.4, 7.2, boxstyle='round,pad=0.15', facecolor='#FFF7ED', edgecolor='#D97706', linewidth=2, zorder=4)
+    ax3.add_patch(cb3)
+    med_lines = ['T: 金额提及 → Y: 驳回判决', '', '中介路径:']
     for m_name, r in med_res.items():
-        sig = '***' if r['is_sig'] else ''
-        med_items.append(f"  {m_name.split('_')[0]}: {r['indirect']*100:+.4f}pp ({r['mediation_pct']:+.0f}%){sig}")
-    med_summary = '\n'.join(med_items)
+        sig = ' ***' if r['is_sig'] else ''
+        med_lines.append(f'  {m_name}: {r["indirect"]*100:+.4f}pp ({r["mediation_pct"]:+.0f}%){sig}')
+    med_lines += ['', '金额主要通过中介路径', '间接影响驳回, 直接效应', '不显著']
+    ax3.text(5, 3.8, chr(10).join(med_lines), ha='center', va='center', fontsize=9.5, color=DARK, zorder=6)
 
-    med_text = f"""
-╔══════════════════════════════╗
-║  🔗 因果中介分析             ║
-╠══════════════════════════════╣
-║                              ║
-║  T: 金额 → Y: 驳回          ║
-║                              ║
-║  中介路径:                   ║
-{med_summary}
-║                              ║
-║  金额主要通过中介路径       ║
-║  间接影响驳回, 直接效应     ║
-║  不显著                    ║
-╚══════════════════════════════╝
-"""
-    ax.text(0.5, 0.5, med_text, transform=ax.transAxes, fontsize=8.5, fontfamily='monospace',
-            ha='center', va='center',
-            bbox=dict(boxstyle='round', facecolor='#F0F0FF', edgecolor=COLORS['accent']))
+    # Row 1: 4-layer framework
+    ax_mid = fig.add_subplot(gs[1, :])
+    ax_mid.set_xlim(0, 33); ax_mid.set_ylim(0, 8); ax_mid.axis('off')
+    ax_mid.text(16.5, 7.5, 'Causal Inference Toolkit', ha='center', va='center', fontsize=14, fontweight='bold', color=DARK)
 
-    # (1,0)-(1,2): 因果方法论总结
-    ax = fig.add_subplot(gs[1, :])
-    ax.axis('off')
-    flow = """
-    ╔══════════════════════════════════════════════════════════════════════════════════════╗
-    ║                   因果推断方法体系 (Causal Inference Toolkit)                          ║
-    ╠══════════════════════════════════════════════════════════════════════════════════════╣
-    ║                                                                                      ║
-    ║   方法层1: PSM (基准)                                                                 ║
-    ║   ├── 匹配消除可观测混淆 → ATT                                                       ║
-    ║   └── SMD < 0.1 平衡检验 ✓                                                           ║
-    ║                                                                                      ║
-    ║   方法层2: 稳健性检验                                                                ║
-    ║   ├── IPW (不同加权策略) → 交叉验证                                                   ║
-    ║   ├── 双重稳健 (防模型误设) → 保护性检验                                              ║
-    ║   └── Rosenbaum (不可观测混淆) → 敏感性边界 ★                                         ║
-    ║                                                                                      ║
-    ║   方法层3: 异质性探索                                                                 ║
-    ║   └── 因果森林 → CATE(x) → "对谁有效应?" ★                                           ║
-    ║                                                                                      ║
-    ║   方法层4: 机制解释                                                                   ║
-    ║   └── Baron-Kenny + Bootstrap → 直接/间接效应分解 ★                                   ║
-    ║                                                                                      ║
-    ║   综合结论: 金额提及对驳回概率无独立因果效应(PSM ATT=+0.59pp,n.s.)                    ║
-    ║            但通过争议复杂度有微弱间接效应; 因果森林揭示{cf_res.get('sig_pct',0):.0f}%样本存在显著异质性           ║
-    ║            Rosenbaum 表明结论对中等程度不可观测混淆具有鲁棒性                          ║
-    ╚══════════════════════════════════════════════════════════════════════════════════════╝
-""".format(cf_res=cf_res)
-    ax.text(0, 1, flow, transform=ax.transAxes, fontsize=8.5, fontfamily='monospace',
-            verticalalignment='top', fontweight='bold',
-            bbox=dict(boxstyle='round', facecolor='#FFFEF5', edgecolor=COLORS['primary'], alpha=0.95))
+    layers = [
+        (1.0, 1.5, 6.5, 4.5, '#FEF2F2', RED, 'L1: Logistic/LASSO', ['回归基准模型', 'AUC = 0.695']),
+        (9.5, 1.5, 6.5, 4.5, '#ECFDF5', GREEN, 'L2: PSM + IPW + DR', ['PSM 匹配 | IPW 加权', 'Rosenbaum 敏感性', 'ATT = +0.59pp (n.s.)']),
+        (18.0, 1.5, 6.5, 4.5, '#EFF6FF', '#2563EB', 'L3: Causal Forest', ['CATE 异质性分析', '10.9% 样本有显著', '异质性处理效应']),
+        (26.5, 1.5, 6.5, 4.5, '#FFF7ED', '#D97706', 'L4: Mediation', ['Baron-Kenny + Bootstrap', '间接效应 +0.41pp', '中介占比 7.4%']),
+    ]
+    for x, y, w, h, fc, ec, title, desc_lines in layers:
+        box = FancyBboxPatch((x, y), w, h, boxstyle='round,pad=0.15', facecolor=fc, edgecolor=ec, linewidth=2.5, zorder=5)
+        ax_mid.add_patch(box)
+        ax_mid.text(x + w/2, y + h - 0.9, title, ha='center', va='top', fontsize=9.5, fontweight='bold', color=ec, zorder=6)
+        ax_mid.text(x + w/2, y + 0.8, chr(10).join(desc_lines), ha='center', va='bottom', fontsize=8, color=DARK, zorder=6)
 
-    # (2,0)-(2,2): 局限性
-    ax = fig.add_subplot(gs[2, :])
-    ax.axis('off')
-    limits = """
-    ╔══════════════════════════════════════════════════════════════════════════════════════╗
-    ║  ⚠️  方法论局限与未来方向                                                             ║
-    ╠══════════════════════════════════════════════════════════════════════════════════════╣
-    ║  PSM/IPW:        仅处理可观测混淆。若存在影响处理分配和结果的未观测变量(法官特征、      ║
-    ║                  证据强度),估计将有偏。Rosenbaum提供部分保护但非完全免疫。             ║
-    ║  因果森林:       依赖Double ML的正则条件。CATE估计的覆盖率在小样本子组中可能不准确。    ║
-    ║  中介分析:       Baron-Kenny要求"无未观测的T-M混杂"和"无未观测的M-Y混杂"——            ║
-    ║                  这两个假设在观测数据中很难同时满足。Bootstrap只能解决抽样变异,         ║
-    ║                  不能解决遗漏变量偏误。                                               ║
-    ║                                                                                      ║
-    ║  未来方向: 1)获取法官/法院/证据信息以控制更多混淆; 2)寻找自然实验(随机分案试点)         ║
-    ║  作为工具变量; 3)在面板数据框架下应用合成DID或Callaway-Sant'Anna估计量。                ║
-    ╚══════════════════════════════════════════════════════════════════════════════════════╝
-    """
-    ax.text(0, 1, limits, transform=ax.transAxes, fontsize=8.5, fontfamily='monospace',
-            verticalalignment='top', fontweight='bold',
-            bbox=dict(boxstyle='round', facecolor='#FFF5F5', edgecolor=COLORS['dismiss'], alpha=0.95))
+    for i in range(3):
+        x_from = layers[i][0] + layers[i][2] + 0.3
+        x_to = layers[i+1][0] - 0.3
+        y_mid = layers[i][1] + layers[i][3]/2
+        ax_mid.annotate('', xy=(x_to, y_mid), xytext=(x_from, y_mid), arrowprops=dict(arrowstyle='->', color='#6B7280', lw=3), zorder=4)
 
-    fig.savefig(os.path.join(OUTPUT_DIR, 'fig_causal_advanced_dashboard.png'), dpi=180)
+    # Row 2: Conclusion
+    ax_con = fig.add_subplot(gs[2, :])
+    ax_con.set_xlim(0, 33); ax_con.set_ylim(0, 5); ax_con.axis('off')
+    con_box = FancyBboxPatch((0.5, 0.3), 32, 4.2, boxstyle='round,pad=0.2', facecolor='#FEFCE8', edgecolor='#7F1D1D', linewidth=2.5, zorder=5)
+    ax_con.add_patch(con_box)
+    ax_con.text(16.5, 4.0, 'Summary', ha='center', va='center', fontsize=12, fontweight='bold', color='#7F1D1D', zorder=6)
+    con_text = (f'金额提及对驳回判决无显著的直接因果效应 (PSM后不显著)\n'
+        f'但通过争议复杂度有微弱间接效应; 因果森林揭示 {cf_res.get("sig_pct",0):.0f}% 样本存在显著异质性\n'
+        'Rosenbaum 表明结论对中等程度不可观测混淆具有鲁棒性')
+    ax_con.text(16.5, 1.8, con_text, ha='center', va='center', fontsize=9.5, color=DARK, zorder=6)
+
+    # Row 3: Limitations
+    ax_lim = fig.add_subplot(gs[3, :])
+    ax_lim.set_xlim(0, 33); ax_lim.set_ylim(0, 5); ax_lim.axis('off')
+    lim_box = FancyBboxPatch((0.5, 0.3), 32, 4.2, boxstyle='round,pad=0.2', facecolor='#FFF1F2', edgecolor='#DC2626', linewidth=2.5, zorder=5)
+    ax_lim.add_patch(lim_box)
+    ax_lim.text(16.5, 4.0, 'Limitations & Future Work', ha='center', va='center', fontsize=12, fontweight='bold', color='#DC2626', zorder=6)
+    lim_text = (
+        'PSM/IPW: 仅处理可观测混淆。未观测变量可能导致有偏估计\n'
+        'Causal Forest: 依赖 Double ML 正则条件, CATE 覆盖率在小样本子组中可能不准确\n'
+        "Mediation: Baron-Kenny 要求无未观测T-M混杂和无未观测M-Y混杂\n"
+        'Future: 1) 获取法官/法院信息; 2) 自然实验作为IV; 3) 合成DID或Callaway-Sant\'Anna')
+    ax_lim.text(16.5, 1.8, lim_text, ha='center', va='center', fontsize=8.5, color=DARK, zorder=6)
+
+    fig.savefig(os.path.join(OUTPUT_DIR, 'fig_causal_advanced_dashboard.png'), dpi=180, bbox_inches='tight')
     plt.close(fig)
     print(f"   ✅ 图表: fig_causal_advanced_dashboard.png")
-
 
 # ============================================================
 # 主函数

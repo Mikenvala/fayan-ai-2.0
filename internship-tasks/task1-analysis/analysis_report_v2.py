@@ -53,12 +53,11 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import matplotlib.ticker as ticker
 
-heiti_path = '/System/Library/Fonts/STHeiti Light.ttc'
-if os.path.exists(heiti_path):
-    fm.fontManager.addfont(heiti_path)
-    plt.rcParams['font.sans-serif'] = ['Heiti TC']
-else:
-    plt.rcParams['font.sans-serif'] = ['Songti SC', 'PingFang SC', 'SimHei']
+for heiti_path in ['/System/Library/Fonts/STHeiti Medium.ttc', '/System/Library/Fonts/STHeiti Light.ttc']:
+    if os.path.exists(heiti_path):
+        fm.fontManager.addfont(heiti_path)
+plt.rcParams['font.sans-serif'] = ['Heiti TC', 'STHeiti', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['axes.unicode_minus'] = False
 plt.rcParams.update({'figure.dpi': 150, 'savefig.dpi': 150, 'savefig.bbox': 'tight', 'font.size': 10})
 

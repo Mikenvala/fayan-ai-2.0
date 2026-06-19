@@ -46,16 +46,16 @@
 <div class="section-title">项目经历</div>
 
 <div class="proj-header">
-  <span class="proj-date">2025/03 ～ 至今</span> &nbsp; 法眼AI 2.0 —— 智能法律案例分析统一平台 &nbsp; <span style="font-weight:400;color:#888;">（独立开发 · 已开源·支持Docker部署）</span>
+  <span class="proj-date">2025/03 ～ 2025/06</span> &nbsp; 法眼AI 2.0 —— 智能法律案例分析统一平台 &nbsp; <span style="font-weight:400;color:#888;">（独立开发 · 已开源·支持Docker部署）</span>
 </div>
 <ul>
   <li><b>项目概述：</b>基于 LLM + RAG 的智能法律平台，覆盖<b>大数据分析、智能体开发、智能应用、学术报告</b>四大模块。处理 10,241 条裁判文书，构建从统计分析到因果推断的完整分析链路，集成多 Agent 协作对话系统与交互式数据仪表盘，撰写 CSSCI 级别学术论文 1 篇。项目已开源·支持Docker部署至 GitHub，支持 Docker 部署。</li>
   <li><b>大数据分析（Task 1）：</b>完成描述性统计、Logistic 回归、LASSO 特征选择、LDA 主题建模、Mann-Kendall 趋势检验与 STL 时间序列分解；进一步构建<b>因果推断四层框架</b>（PSM + IPW + DID + 因果森林 + 中介分析 + Rosenbaum 敏感性检验），产出 20+ 张专业图表。</li>
   <li><b>智能体开发（Task 2）：</b>基于 LangChain 构建法律案件智能推荐 Agent，实现 BM25 + TF-IDF char-ngram 混合检索（Top-3 准确率 70%+），集成 MiniMax LLM 实现意图识别、类案检索与格式化输出，支持多轮对话与防幻觉机制。</li>
-  <li><b>多 Agent 协作系统（Task 4）：</b>使用 <b>LangGraph</b> 编排三 Agent 协作工作流——检索 Agent（BM25+TF-IDF）→ 分析 Agent（LLM 法律推理）→ 校验 Agent（事实核查与引用验证），支持 <b>SSE 流式输出</b>与 Markdown 渲染，实现逐字实时对话体验。</li>
-  <li><b>Web 应用与可视化（Task 4）：</b>后端采用 <b>FastAPI</b> 构建 RESTful API（/api/dashboard、/api/agent、/api/report），前端实现 SPA 三合一页面（数据仪表盘 + 智能问答 + 报告生成），集成 <b>ECharts</b> 7 张交互图表（含词云、关键词共现网络）。</li>
+  <li><b>多 Agent 协作系统（Task 4）：</b>使用 <b>LangGraph</b> 编排三 Agent 协作工作流——检索 Agent（BM25+TF-IDF）→ 分析 Agent（LLM 法律推理）→ 校验 Agent（事实核查与引用验证），支持 <b>SSE 流式输出</b>与 Markdown 渲染。另构建<b>模拟法庭辩论系统</b>：原告律师 vs 被告律师多轮交锋 + 法官 Agent 终裁，SSE 流式实时推送，集成至 Web 平台独立辩论 Tab。</li>
+  <li><b>Web 应用与可视化（Task 4）：</b>后端采用 <b>FastAPI</b> 构建 RESTful API（/api/dashboard、/api/agent、/api/report、/api/debate），前端实现 SPA 四合一页面（数据仪表盘 + 智能问答 + 模拟辩论 + 报告生成），集成 <b>ECharts</b> 7 张交互图表。报告模块实现<b>AI 输出智能美化</b>：Unicode 框线图自动识别并转换为精美 HTML 信息卡片（深红渐变头部 + 键值对排版）。</li>
   <li><b>学术论文（Task 3）：</b>以"裁判文书数据的因果推断"为题，独立撰写 <b>LaTeX 格式 CSSCI 级别学术论文</b>（15 页，25 篇参考文献），含中英文结构化摘要、四层因果推断框架、6 张三线表与 8 张图。完整呈现研究问题→文献综述→方法设计→实证分析→结论建议的学术规范。</li>
-  <li><b>LLM 法律能力评测（Task 5）：</b>设计 30 题法律推理评测基准（法条适用/罪名判断/量刑推理/案例分析/程序问题 5 类），对 MiniMax-M2.7 进行系统评测，产出量化得分报告（平均 2.10/5，量刑推理最强 63%）。构建<b>多Agent 法律辩论系统</b>，原告 Agent 与被告 Agent 3 轮交锋 + 法官 Agent 裁决总结，支持多个预设案例。</li>
+  <li><b>LLM 法律能力评测（Task 5）：</b>设计 30 题法律推理评测基准（法条适用/罪名判断/量刑推理/案例分析/程序问题 5 类），对 MiniMax-M2.7 进行系统评测，产出量化得分报告（平均 2.10/5，量刑推理最强 63%）。构建<b>多Agent 法律辩论系统</b>（已集成至平台辩论Tab）：原告 vs 被告 3 轮交锋 + 法官终裁，支持 3 个预设案例与自定义案例，<b>SSE 流式逐轮推送</b>。</li>
   <li><b>技术栈：</b>Python（FastAPI、Flask、LangChain、LangGraph、scikit-learn、jieba、NumPy、Pandas）、MiniMax LLM、RAG（FAISS/BM25）、ECharts、Docker、Git、LaTeX。</li>
 </ul>
 
@@ -84,7 +84,7 @@
 
 <div class="section-title">自我评价</div>
 <p class="eval-text">
-做事认真负责，具备较强的自学能力与钻研精神。在法眼AI 2.0项目中，独立完成从需求分析、技术选型、系统设计，到数据分析、Agent开发、全栈应用搭建、学术论文撰写的全流程工作；构建了 LLM 法律能力评测基准和多 Agent 辩论系统，展现了扎实的数据分析、AI 开发与科研能力。具备团队协作经验（SRT项目组长），善于沟通与合作。对大数据分析、智能体开发与人工智能应用方向有浓厚兴趣，渴望在实习中进一步锻炼技术能力与业务理解。
+做事认真负责，具备较强的自学能力与钻研精神。在法眼AI 2.0项目中，独立完成从需求分析、技术选型、系统设计，到数据分析、Agent开发、全栈应用搭建、学术论文撰写的全流程工作；构建了 LLM 法律能力评测基准和模拟法庭辩论系统（集成至 Web 平台），实现了 AI 输出智能美化（框线图→信息卡片），展现了扎实的数据分析、AI 开发与全栈工程能力。具备团队协作经验（SRT项目组长），善于沟通与合作。对大数据分析、智能体开发与人工智能应用方向有浓厚兴趣，渴望在实习中进一步锻炼技术能力与业务理解。
 </p>
 
 <div class="footer-note">

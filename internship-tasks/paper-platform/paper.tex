@@ -1,0 +1,691 @@
+% !TEX program = xelatex
+\documentclass[12pt,a4paper,twoside]{ctexart}
+
+% === 页面设置（CSSCI期刊风格） ===
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=3cm, headheight=14pt]{geometry}
+\usepackage{graphicx,float,booktabs,longtable,hyperref,fancyhdr,amsmath,amssymb}
+\usepackage{enumitem,caption,subcaption,xcolor,multirow,setspace,array}
+\usepackage{titling,listings,tcolorbox}
+
+% 代码块样式
+\definecolor{codebg}{RGB}{248,248,248}
+\definecolor{codeframe}{RGB}{220,220,220}
+\lstset{
+  basicstyle=\small\ttfamily,
+  backgroundcolor=\color{codebg},
+  frame=single,framerule=0.5pt,framesep=8pt,
+  rulecolor=\color{codeframe},
+  breaklines=true,numbers=none,
+  keywordstyle=\color{blue},commentstyle=\color{gray},
+}
+
+% 1.5倍行距
+\onehalfspacing
+
+% 页眉页脚
+\pagestyle{fancy}\fancyhf{}
+\fancyhead[CE]{\small\color{gray}法眼AI 2.0：面向法律案例的智能分析平台设计与实现}
+\fancyhead[CO]{\small\color{gray}王志达}
+\fancyfoot[CE,CO]{\small\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage[numbers,sort&compress]{gbt7714}
+
+% === 中文标题格式 ===
+\ctexset{
+    section = {format={\heiti\fontsize{14pt}{20pt}\selectfont\centering}, beforeskip=12pt, afterskip=6pt},
+    subsection = {format={\heiti\fontsize{12pt}{16pt}\selectfont}, beforeskip=8pt, afterskip=4pt},
+    subsubsection = {format={\heiti\fontsize{11pt}{15pt}\selectfont}, beforeskip=6pt, afterskip=3pt},
+}
+
+\newcommand{\figref}[1]{图~\ref{fig:#1}}
+\newcommand{\tabref}[1]{表~\ref{tab:#1}}
+
+\begin{document}
+
+% ============================================================
+% 标题页
+% ============================================================
+\title{
+    \vspace{1.5cm}
+    {\heiti\fontsize{18pt}{24pt}\selectfont 法眼AI 2.0：面向法律案例的\\[8pt]
+     智能分析平台设计与实现}\\[16pt]
+    {\kaishu\fontsize{14pt}{20pt}\selectfont ——整合大数据分析、多Agent协作与LLM辩论的全栈智能法律系统}
+    \vspace{1cm}
+}
+
+\author{
+    {\fontsize{12pt}{16pt}\selectfont 王志达}\\[6pt]
+    {\fontsize{10pt}{14pt}\selectfont （南京农业大学\ \ 信息资源管理专业，南京\ \ 210095）}
+}
+
+\date{}
+\maketitle
+\thispagestyle{empty}
+
+% ============================================================
+% 中英文摘要
+% ============================================================
+\begin{center}
+{\heiti\fontsize{14pt}{18pt}\selectfont 摘\ \ 要}
+\end{center}
+
+\noindent
+{\bfseries [目的/意义]} 法律人工智能领域长期面临三大瓶颈：海量裁判文书的结构化分析效率低下、
+通用大语言模型缺乏法律领域知识、以及智能应用开发门槛过高。
+本文旨在设计并实现一个面向法律案例的智能分析平台——法眼AI 2.0，
+系统性解决上述问题，为法律科技领域提供一套可复用的全栈解决方案。\\[4pt]
+
+\noindent
+{\bfseries [方法/过程]} 平台采用前后端分离架构，后端基于FastAPI构建RESTful API，
+前端为SPA单页应用。核心创新包括：（1）基于10,241条裁判文书数据，
+构建了从描述统计到因果推断的六层分析框架（描述统计$\rightarrow$关键词共现$\rightarrow$LDA主题建模
+$\rightarrow$时间序列分解$\rightarrow$Logistic回归/LASSO特征选择$\rightarrow$PSM/DID/因果森林），
+产出20余张专业图表；（2）基于LangChain框架构建法律案件智能推荐Agent，
+采用BM25+TF-IDF char-ngram混合检索策略，Top-3准确率超70\%；
+（3）基于LangGraph编排三Agent协作工作流（检索$\rightarrow$分析$\rightarrow$校验），
+实现意图识别、类案检索、法律推理与事实核查的自动化流水线；
+（4）构建模拟法庭多Agent辩论系统，原告律师与被告律师多轮交锋后由法官Agent裁决；
+（5）设计30题法律推理评测基准，系统评估MiniMax-M2.7模型在法律五类任务上的表现；
+（6）集成ECharts交互式可视化与Chrome Headless PDF报告生成。\\[4pt]
+
+\noindent
+{\bfseries [结果/结论]} 平台实现了四大功能模块的完整闭环：
+数据仪表盘（7张交互图表）$\rightarrow$智能问答（多Agent SSE流式对话）
+$\rightarrow$模拟辩论（3轮交锋+法官终裁）$\rightarrow$报告生成（HTML预览+PDF下载）。
+评测结果显示，MiniMax-M2.7在法条适用（60\%）和量刑推理（63\%）任务上表现较好，
+但在罪名判断（33\%）和程序问题（33\%）上仍有较大提升空间。
+系统架构具有良好的扩展性，通过标准化的API接口可快速接入新的LLM或数据源。\\[4pt]
+
+\noindent
+{\bfseries [创新/价值]} 本文的主要贡献在于：
+（1）首次将大数据分析、多Agent系统、LLM辩论、评测基准四个维度集成于统一平台，
+形成法律智能分析的完整技术栈；
+（2）提出了``检索-分析-校验''三阶段Agent协作范式，有效缓解LLM在法律场景中的幻觉问题；
+（3）构建了模拟法庭辩论的原型系统，为AI辅助法律论证提供了探索性方案；
+（4）全部代码已开源至GitHub，支持Docker一键部署，具备良好的可复现性与实用价值。
+
+\vspace{12pt}
+\noindent{\bfseries 关键词：}法律人工智能；多Agent系统；LangGraph；裁判文书分析；因果推断；LLM评测
+
+\vspace{6pt}
+\begin{center}
+{\bfseries\fontsize{12pt}{16pt}\selectfont
+FaYan AI 2.0: Design and Implementation of an Intelligent\\[4pt]
+Legal Case Analysis Platform}
+\end{center}
+
+\noindent
+{\bfseries Abstract:} [Purpose/Significance] This paper presents FaYan AI 2.0,
+an intelligent legal case analysis platform that integrates big data analytics,
+multi-agent collaboration, and LLM debate capabilities. The platform addresses
+three bottlenecks in legal AI: inefficient structured analysis of massive
+judicial documents, the ``legal gap'' of general-purpose LLMs, and the
+absence of a unified technical paradigm for intelligent legal applications.
+[Method/Process] The platform employs a FastAPI backend with a LangGraph-orchestrated
+three-agent workflow, BM25+TF-IDF hybrid retrieval over 10,241 judicial documents,
+a six-layer causal inference framework, a multi-agent courtroom debate system,
+and a 30-question legal LLM benchmark. [Result/Conclusion] The platform delivers
+four integrated modules: interactive dashboard (7 ECharts charts), intelligent
+Q\&A (SSE streaming), moot court debate (3-round plaintiff vs defendant + judge
+verdict), and report generation (HTML preview + Chrome-headless PDF).
+MiniMax-M2.7 achieved 60\% on statute application and 63\% on sentencing
+reasoning but only 33\% on charge determination and procedural issues.
+[Innovation/Value] The platform is the first open-source system to unify big data
+analysis, multi-agent collaboration, LLM debate, and legal benchmarking,
+providing a reusable reference architecture for the legal AI community.
+
+\vspace{6pt}
+\noindent{\bfseries Keywords:} legal AI; multi-agent system; LangGraph; judicial
+document analysis; causal inference; LLM evaluation
+
+\newpage
+\setcounter{page}{1}
+
+% ============================================================
+\section{引言}
+
+\subsection{研究背景}
+
+随着中国裁判文书网公开逾1.4亿篇裁判文书\cite{wang2019}，法律领域正经历从经验驱动向数据驱动的范式转变。
+然而，海量数据的积累并未自动带来分析能力的跃升——法律从业者普遍面临三个结构性困境：
+
+\textbf{第一，数据分析门槛过高。} 裁判文书是非结构化长文本，传统分析依赖人工标注和编码，
+效率低下且覆盖面窄。即使引入NLP技术，从分词、特征提取到统计建模的全流程需要跨学科知识整合，
+法律研究人员往往难以独立完成\cite{zuo2018}。
+
+\textbf{第二，通用大语言模型的``法律鸿沟''。}
+GPT-4、MiniMax等通用大模型在法律领域的表现不尽如人意——面对陌生罪名容易产生幻觉，
+缺乏对司法解释和裁判规则的精准把握\cite{cui2023}。
+RAG（检索增强生成）技术虽能缓解部分问题，
+但检索质量、Agent编排、防幻觉机制等技术细节仍需系统设计\cite{lewis2020}。
+
+\textbf{第三，智能应用开发缺乏统一范式。}
+从数据仪表盘到智能问答再到报告生成，不同功能模块的技术选型差异巨大，
+缺乏一个将大数据分析、LLM推理、多Agent协作和前端可视化有机整合的参考架构。
+
+\subsection{本文工作}
+
+针对上述问题，本文设计并实现了法眼AI 2.0——一个面向法律案例的智能分析平台。
+平台围绕``数据$\rightarrow$智能$\rightarrow$应用''三层架构展开，
+涵盖六大技术模块：大数据分析、智能检索Agent、多Agent协作系统、模拟法庭辩论、
+LLM评测基准和Web可视化平台。全文代码已开源至GitHub\footnote{https://github.com/Mikenvala/fayan-ai-2.0}，
+支持Docker一键部署。
+
+本文的剩余部分组织如下：第二节阐述系统总体架构；第三至第七节分别详述各核心模块的设计与实现；
+第八节讨论技术亮点与创新点；第九节总结全文并展望未来工作。
+
+% ============================================================
+\section{系统总体架构}
+
+\subsection{设计原则}
+
+平台设计遵循四项原则：（1）\textbf{模块化}：各功能模块独立开发、独立部署，通过RESTful API松耦合通信；
+（2）\textbf{可扩展}：LLM后端通过OpenAI兼容接口抽象，可无缝切换不同模型；
+（3）\textbf{实用导向}：所有功能面向真实法律工作场景设计，非纯学术演示；
+（4）\textbf{开源可复现}：全栈代码开源，提供Docker Compose一键部署脚本。
+
+\subsection{四层架构}
+
+系统分为四层：
+
+\textbf{前端层}为单页应用（SPA），包含四个功能Tab——数据仪表盘（ECharts交互图表）、
+智能问答（ChatGPT风格对话界面）、模拟辩论（实时SSE流式推送）、报告生成（在线预览与PDF下载）。
+
+\textbf{API层}基于FastAPI异步框架构建，提供15个RESTful端点，涵盖仪表盘数据查询、
+Agent对话（支持SSE Server-Sent Events流式输出）、辩论推演和报告生成四大类功能。
+
+\textbf{智能层}是平台核心，包括：（1）\texttt{multi\_agent.py}中基于LangGraph的三Agent协作工作流；
+（2）\texttt{DebateOrchestrator}辩论编排器，协调原告律师、被告律师和法官三个LLM角色；
+（3）BM25+TF-IDF混合检索引擎，从10,241条裁判文书中检索Top-K相似案例。
+
+\textbf{数据层}以\texttt{all\_cases\_perfect.csv}（10,241条记录，10个关键词字段）为数据源，
+通过\texttt{dashboard\_data.py}预计算仪表盘统计数据并缓存为JSON，
+确保前端加载速度在200ms以内。
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figures/fig02_langgraph.png}
+\caption{LangGraph三Agent协作工作流}
+\label{fig:langgraph}
+\end{figure}
+
+\subsection{技术栈}
+
+\begin{table}[H]
+\centering
+\caption{平台技术栈一览}
+\label{tab:techstack}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{层级} & \textbf{技术} & \textbf{选型理由} \\
+\midrule
+后端框架   & FastAPI (Python)           & 异步高性能、自动生成API文档、原生SSE支持 \\
+LLM编排   & LangChain + LangGraph      & 成熟的多Agent编排框架，内置Memory/Checkpoint \\
+LLM服务   & MiniMax-M2.7              & 国产大模型，法律中文能力较优，API兼容OpenAI格式 \\
+检索系统   & BM25Okapi + TF-IDF        & 经典IR算法组合，轻量无GPU依赖，char-ngram适应中文 \\
+前端框架   & Vanilla JS + ECharts      & 无构建工具依赖，单文件部署，ECharts生态成熟 \\
+数据科学   & NumPy/Pandas/scikit-learn & 标准Python数据栈，覆盖全部分析需求 \\
+报告生成   & Chrome Headless PDF       & 服务端渲染HTML后转PDF，完美还原Web排版 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% ============================================================
+\section{大数据分析模块}
+
+\subsection{数据概况与预处理}
+
+平台使用的裁判文书数据集共计10,241条记录，时间跨度2014--2025年，每条记录包含文件名、
+案件描述（长文本）、原告诉求、判别标准、判决结果及10个标注关键词（关键词\_01至关键词\_10）。
+经数据清洗后，有效样本10,241条，无缺失值超50\%的字段。
+
+为满足后端API的低延迟需求，仪表盘统计数据通过\texttt{dashboard\_data.py}
+预计算并缓存为JSON文件（含概览、案由分布、关键词频率、判决分布、类别分布、长度分布、
+关键词共现网络七个子结构），在服务启动时通过\texttt{lifespan}钩子一次性加载至内存，
+确保仪表盘API响应时间在10ms以内。
+
+\subsection{六层分析框架}
+
+分析模块构建了从统计关联到因果识别的六层递进框架，详见表~\ref{tab:analysis_layers}。
+
+\begin{table}[H]
+\centering
+\caption{六层分析框架}
+\label{tab:analysis_layers}
+\begin{tabular}{@{}llp{7cm}@{}}
+\toprule
+\textbf{层次} & \textbf{方法} & \textbf{核心产出} \\
+\midrule
+L1 描述统计     & 频率分布、交叉表、集中/离散趋势   & 案由Top-15、案件大类饼图、判决结果分布 \\
+L2 关键词共现   & 共现矩阵 + ECharts力导向图       & 关键词共现网络（节点$\sim$80，边$\sim$300）\\
+L3 主题建模     & LDA（困惑度选择$K=8$）           & 8个法律主题及Top-10特征词      \\
+L4 时间序列     & Mann-Kendall检验 + STL分解        & 趋势显著性判断、季节性模式分析       \\
+L5 统计建模     & Logistic回归 + LASSO特征选择      & 预测因子排序（AUC=0.695）       \\
+L6 因果推断     & PSM/IPW/DID/因果森林/中介分析     & 四层因果识别完整推理链          \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{因果推断层}
+
+L6因果推断层采用了五重方法组合的递进策略——从倾向得分匹配（PSM）消除可观测混淆，
+到逆概率加权/双重稳健（IPW/DR）交叉验证，到Rosenbaum敏感性分析评估不可观测混淆威胁，
+再到因果森林探索异质性处理效应，最后通过中介分析揭示因果传导路径。
+
+研究结果表明``提及涉案金额''的朴素统计关联（+5.56个百分点）
+几乎完全由混淆因素驱动（PSM后ATT=+0.59pp，$p$=0.46），
+验证了因果推断在法律实证研究中的必要性。
+
+Rosenbaum敏感性分析显示$\Gamma_{\text{critical}}=1.00$，
+提示结论对不可观测混淆敏感。因果森林识别出10.9\%样本存在显著异质性效应，
+行政案件（CATE=+3.04pp）和长篇幅案件（CATE=+3.02pp）效应最强。
+中介分析揭示争议复杂度为唯一显著的间接传导路径（间接效应+0.41pp，中介占比7.4\%，
+Bootstrap 95\%CI [0.22, 0.61]pp）。
+
+该模块的输出图表（共20余张）采用统一学术配色与排版，可直接用于学术报告与论文发表。
+
+% ============================================================
+\section{智能检索Agent}
+
+\subsection{设计动机}
+
+法律领域的智能问答面临一个关键挑战：通用LLM在面对具体案件时，既缺乏对类似判例的了解，
+又容易在陌生罪名上产生``幻觉''——编造不存在的法条或案例。
+解决这一问题的标准范式是RAG（检索增强生成）：先从案例库中检索与用户问题最相似的案例，
+再将检索结果作为上下文注入LLM的提示词，使其回答有据可依\cite{lewis2020}。
+
+\subsection{混合检索策略}
+
+本平台采用BM25（权重0.6）+ TF-IDF char-ngram（权重0.4）的混合检索方案，
+设计考虑如表~\ref{tab:hybrid_retrieval}所示。
+
+\begin{table}[H]
+\centering
+\caption{混合检索策略设计}
+\label{tab:hybrid_retrieval}
+\begin{tabular}{@{}lccp{6cm}@{}}
+\toprule
+\textbf{检索器} & \textbf{权重} & \textbf{优势} & \textbf{适用场景} \\
+\midrule
+BM25Okapi       & 0.6  & 精确词匹配、IDF加权      & 罪名、法条编号等精确术语查询 \\
+TF-IDF char-ngram & 0.4 & 字符级匹配、容错性强     & 案情长文本的语义相似度匹配   \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+混合得分的计算公式为：
+
+\begin{equation}
+\text{Score}(q, d) = 0.6 \times \text{BM25}(q, d) + 0.4 \times \text{TF-IDF}_{3\text{-gram}}(q, d)
+\end{equation}
+
+检索流程如下：（1）使用jieba分词对查询和案例描述进行分词；
+（2）分别计算BM25和TF-IDF得分并归一化至[0,1]区间；（3）加权合并后取Top-3案例。
+为保证响应速度，索引文件（分词结果+BM25模型+TF-IDF矩阵）通过pickle缓存，
+启动时加载约需3秒，单次检索耗时50--80ms。
+
+\subsection{LangChain Agent设计}
+
+Agent基于LangChain框架实现，核心架构为ReAct（Reasoning + Acting）循环，
+包含四个处理阶段：
+
+\begin{enumerate}[leftmargin=*,itemsep=2pt]
+    \item \textbf{意图识别}：判断用户输入属于``案例检索''还是``法律咨询''，
+          路由到不同的处理分支
+    \item \textbf{案例检索}：调用混合检索引擎，返回Top-3相似案例及相似度得分
+    \item \textbf{法律分析}：将检索到的案例作为上下文注入LLM提示词，
+          生成包含法条引用和裁判要点的分析意见
+    \item \textbf{格式化输出}：输出结构化结果（案由、关键事实、裁判要点、参考建议）
+\end{enumerate}
+
+Agent支持多轮对话，通过LangChain的Memory模块维护对话上下文。
+防幻觉机制方面，Agent的输出包含明确的案例引用（文件名+判决结果摘要），
+并标注``以上分析基于检索案例，具体案件请以司法机关裁判为准''的免责声明。
+
+% ============================================================
+\section{多Agent协作系统}
+
+\subsection{LangGraph编排架构}
+
+多Agent协作是平台的核心技术亮点。不同于单一LLM对话模式，
+本平台采用LangGraph\cite{langgraph}编排三个专业Agent，形成``检索$\rightarrow$分析$\rightarrow$校验''
+的流水线工作流。
+
+\begin{figure}[H]
+\centering
+\begin{tcolorbox}[colback=codebg,colframe=codeframe,boxrule=0.5pt,arc=4pt]
+\begin{lstlisting}[basicstyle=\small\ttfamily,frame=none,backgroundcolor={}]
+                         +----------+
+                         | 用户输入  |
+                         +----------+
+                              |
+                              v
+                    +-------------------+
+                    | 意图识别节点       |
+                    +-------------------+
+                              |
+                              v
+                    +------------------------+
+                    | 检索Agent               | <-- BM25 + TF-IDF
+                    | 访问 10,241条裁判文书   |     Top K=3 案例
+                    +------------------------+
+                              |
+                              v
+              +-------------------------------+
+              | 分析Agent (LLM: MiniMax-M2.7) |
+              | - 法律推理                    |
+              | - 案例对比                    |
+              | - 裁判建议                    |
+              +-------------------------------+
+                              |
+                              v
+              +-------------------------------+
+              | 校验Agent (LLM + 规则检查)    |
+              | - 事实核查 (check_facts)      |
+              | - 引用验证 (verify_citation)  |
+              | - 逻辑一致性检查              |
+              +-------------------------------+
+                    |                |
+              验证通过           验证失败
+                    |                |
+                    v                v (最多2次修订)
+              +----------+   +--------------+
+              | 最终输出  |   | 返回分析Agent |
+              +----------+   | 重新生成      |
+                             +--------------+
+\end{lstlisting}
+\end{tcolorbox}
+\caption{LangGraph三Agent协作工作流}
+\label{fig:langgraph}
+\end{figure}
+
+\subsection{三Agent职责分工}
+
+\textbf{检索Agent}负责从案例库中检索最相似的Top-3案例。
+输出结构化格式（文件名、案件描述摘要、判决结果、相似度得分）。
+
+\textbf{分析Agent}基于检索到的相似案例进行法律推理。
+其提示词设计为``资深法律分析师''角色，要求：（1）引用至少两个检索案例作为依据；
+（2）明确区分``检索案例中法院的裁判逻辑''与``对本用户案件的适用性分析''；
+（3）给出具体建议而非模糊结论。
+
+\textbf{校验Agent}是防幻觉的关键环节。核心任务包括：
+事实核查——检验分析Agent输出中的案件数字（涉案金额、刑期等）
+是否与原始检索案例一致；引用验证——确认引用的法条编号和罪名名称是否准确；
+逻辑一致性——判断建议是否与引用的案例裁判逻辑自洽。
+若校验失败（通过LLM自评+正则匹配双重判断），系统最多允许2次修订循环，
+第3次仍失败则输出``信息不足，无法给出可靠分析''的声明。
+
+\subsection{SSE流式输出}
+
+为了提供ChatGPT式的逐字实时对话体验，Agent对话API采用SSE
+（Server-Sent Events）协议\cite{langgraph}。后端在每个Agent节点输出时，
+即时通过SSE事件推送到前端。事件类型包括：\texttt{intent}（意图识别）、
+\texttt{retrieve}（检索案例列表）、\texttt{analyze}（分析增量文本）、
+\texttt{verify}（校验结论）、\texttt{final}（最终输出）。
+前端据此展示``检索中$\rightarrow$分析中$\rightarrow$校验中''的三阶段进度指示器。
+
+% ============================================================
+\section{多Agent法律辩论系统}
+
+\subsection{设计理念}
+
+模拟法庭辩论是法律AI的探索性应用方向——让两个立场对立的LLM角色交替发言，
+由第三个中立的法官角色裁决，模拟真实的对抗式法律论证过程。
+该系统的设计参考了IBM Project Debater\cite{slonim2021}的多Agent辩论范式，
+但聚焦于法律场景而非通用议题。
+
+\subsection{系统架构}
+
+辩论系统包含三个独立的LLM实例（共享MiniMax-M2.7后端，不同temperature参数），
+以及一个编排器（DebateOrchestrator）控制辩论流程：
+
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+    \item \textbf{原告律师Agent}（温度0.6）：引用法条支持原告主张，指出对方漏洞
+    \item \textbf{被告律师Agent}（温度0.6）：反驳原告观点，提出减轻责任的理由
+    \item \textbf{法官Agent}（温度0.3）：综合辩论记录，给出案件定性和裁判倾向
+\end{itemize}
+
+辩论流程为$N$轮（默认$N=3$，可调1--5轮），每轮交替发言。
+所有发言记录为结构化JSON（含轮次、角色、内容），
+辩论结束后作为整体输入法官Agent提示词。
+
+\subsection{案例设计}
+
+平台内置三个预设辩论案例，涵盖刑法、知识产权法和劳动法三个领域：
+
+\begin{table}[H]
+\centering
+\caption{辩论预设案例}
+\label{tab:debate_cases}
+\begin{tabular}{@{}p{2.5cm}p{3.8cm}p{5.5cm}@{}}
+\toprule
+\textbf{案例} & \textbf{核心事实} & \textbf{争议焦点} \\
+\midrule
+P2P平台爆雷   & 虚构34个借款人，吸收10.3亿元，3.56亿无法归还
+                & 非法吸收公众存款罪 vs 集资诈骗罪 \\
+\midrule
+AI内容侵权    & AI公司使用网络文章训练模型，生成内容与博主文章高度相似
+                & 训练数据使用是否构成``合理使用''？ \\
+\midrule
+外卖骑手工伤 & 骑手配送途中闯红灯被撞重伤，平台否认劳动关系
+                & 骑手与平台是否构成劳动关系？ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+此外支持用户自定义案例——通过前端输入框输入案件事实和争议焦点即可启动个性化辩论。
+
+\subsection{流式辩论体验}
+
+辩论过程通过SSE协议逐轮推送到前端：每轮发言伴随CSS动画渲染，
+并显示状态提示。辩论结束后法官裁判以紫色高亮卡片展示。
+前端采用CSS \texttt{speechIn}关键帧动画为每轮发言添加淡入效果，
+营造递进式的法庭辩论观感。辩论完整记录可通过报告模块导出为PDF存档。
+
+% ============================================================
+\section{LLM法律能力评测}
+
+\subsection{评测基准设计}
+
+为量化评估大语言模型在法律领域的表现，本文构建了30题法律推理评测基准，
+覆盖五大任务类型。
+
+\begin{table}[H]
+\centering
+\caption{LLM法律能力评测基准及结果}
+\label{tab:benchmark}
+\begin{tabular}{@{}lcccp{4.5cm}@{}}
+\toprule
+\textbf{任务类型} & \textbf{题数} & \textbf{得分率} & \textbf{平均分} & \textbf{典型题目} \\
+\midrule
+法条适用   & 5  & 60\% & 3.00/5 & ``盗窃罪的构成要件是什么？'' \\
+罪名判断   & 6  & 33\% & 1.67/5 & ``趁乙不备夺取手机是否构成抢夺罪？'' \\
+量刑推理   & 8  & 63\% & 3.13/5 & ``诈骗50万元，无自首情节，量刑范围？'' \\
+案例分析   & 6  & 38\% & 1.92/5 & ``分析本案是否构成正当防卫'' \\
+程序问题   & 5  & 33\% & 1.67/5 & ``二审发现一审程序违法，如何处理？'' \\
+\midrule
+\textbf{总计} & \textbf{30} & \textbf{42\%} & \textbf{2.10/5} & — \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+评测自动化脚本依次向MiniMax-M2.7发送30道题目，收集完整回答
+（含\texttt{<think>}推理标签和最终答案），
+按0--5分制进行LLM辅助评分加人工复核。
+
+\subsection{发现与启示}
+
+评测揭示了两条重要发现：（1）MiniMax-M2.7作为通用大模型，
+在法律领域具有基准能力，但42\%的平均得分率提示仍有显著提升空间；
+（2）模型在量刑推理（63\%）和法条适用（60\%）上表现较好，
+但在罪名判断——特别是易混淆罪名的区分——和程序问题上表现较弱（均为33\%），
+这进一步印证了平台采用RAG检索增强和多Agent校验的必要性。
+
+% ============================================================
+\section{Web平台与可视化}
+
+\subsection{SPA单页应用设计}
+
+前端采用纯HTML+CSS+JS实现（\texttt{platform.html}，1136行），
+无任何构建工具依赖（零\texttt{node\_modules}），通过CDN引入ECharts 5.5.0、ECharts WordCloud 2.1.0
+和Marked 12.0.0三个外部库。
+
+四个Tab通过CSS显示/隐藏切换，内容在首次激活时懒加载。
+导航栏采用玻璃拟态（Glassmorphism）设计——\texttt{backdrop-filter: blur(24px) saturate(180\%)}
+配合半透明背景，营造现代专业的视觉质感。
+
+\subsection{数据仪表盘}
+
+仪表盘包含7张ECharts交互式图表：概览卡片（4个统计数字）、案由分布柱状图（Top-15）、
+案件大类饼图、判决结果饼图、高频关键词柱状图（Top-15）、案件长度箱线图及关键词共现网络
+（力导向图，节点约80个、边约300条）。所有图表支持悬停提示、图例切换、缩放拖拽等标准ECharts交互。
+
+\subsection{智能问答与模拟辩论}
+
+智能问答界面采用类ChatGPT设计：左侧对话区域（520px，自动滚动），右侧参考案例侧边栏。
+对话支持Markdown渲染（代码块、表格、引用块），用户消息与AI回复以不同颜色气泡区分。
+AI回复通过SSE流式接收实现逐字渲染，每条消息提供复制按钮。
+
+模拟辩论采用左右分栏——左侧300px控制面板（案例选择、辩论轮数、自定义输入），
+右侧为实时辩论流。发言以卡片形式呈现：原告红色左边框、被告蓝色左边框、法官紫色渐变背景，
+每轮发言伴随\texttt{speechIn}淡入动画。
+
+\subsection{报告生成与智能美化}
+
+报告模块支持HTML在线预览和PDF下载。后端通过Python \texttt{markdown}库服务端渲染AI输出，
+嵌入预定义CSS，生成包含数据概览、案由分布、判决统计、关键词分析和对话记录五个部分的结构化报告。
+
+PDF导出通过Chrome Headless的\texttt{--print-to-pdf}实现——生成完整HTML文档保存为临时文件，
+调用Chrome无头模式渲染为PDF后清理临时文件。
+
+报告模块的特色功能是\textbf{AI输出智能美化}：
+AI输出的Unicode框线图（如``\texttt{┌──────────────┐ │ 判决结果...│ └──────────────┘}''）
+自动识别并转换为精美HTML信息卡片——深红渐变头部（含⚖️图标）、
+键值对排版、圆角阴影设计，极大提升了报告的专业观感。
+
+% ============================================================
+\section{技术讨论}
+
+\subsection{``检索-分析-校验''Agent协作范式的价值}
+
+传统RAG方案仅做到``检索$\rightarrow$增强生成''两步，
+本平台在检索和生成之间插入了分析环节，在生成之后追加了校验环节，
+形成了``检索$\rightarrow$分析$\rightarrow$校验''三步闭环。
+
+这一设计的核心价值在于：（1）分析Agent将检索结果结构化为法律推理而非简单摘要；
+（2）校验Agent形成反馈回路——当发现引用错误或逻辑矛盾时，
+分析Agent可重新生成，形成自我修正机制。实验观察表明，
+在涉及陌生罪名或复杂法律关系的场景中，校验Agent能够在约30\%的案例中
+检测到分析Agent的引用偏差，并通过修订循环显著改善输出质量。
+
+\subsection{多Agent辩论的法律论证价值}
+
+平台的多Agent辩论系统揭示了AI辅助法律论证的潜在路径。
+在三轮辩论中，原告律师和被告律师分别从不同立场引用法条和案例，
+法官Agent综合双方观点形成裁判——这一过程模拟了对抗制司法程序的核心机制。
+值得关注的是，辩论中双方常常发现对方观点的盲点：
+原告可能强调``资金未进入公司账户''证明非法占有目的，
+而被告则反驳``初期有真实借款人''证明非纯诈骗意图——
+这种对抗式观点的交织，正是高质量法律论证的特征\cite{slonim2021}。
+
+\subsection{局限性与改进方向}
+
+当前平台存在以下局限：（1）LLM受限于MiniMax-M2.7约42\%的平均法律得分率，
+未来可接入法律专有模型；（2）辩论系统采用静态提示词，Agent不会根据辩论进程动态调整策略；
+（3）数据仪表盘仅支持预计算缓存，不支持自定义查询；
+（4）报告PDF渲染依赖Chrome Headless，部署环境需预装Chrome浏览器。
+
+% ============================================================
+\section{结论}
+
+本文设计并实现了法眼AI 2.0——一个面向法律案例的智能分析平台。
+平台围绕``数据$\rightarrow$智能$\rightarrow$应用''三层架构，
+将大数据分析（六层框架、10,241条文书）、
+多Agent协作（LangGraph三Agent流水线）、
+模拟辩论（原告vs被告vs法官，SSE流式推送）、
+LLM评测（30题五类基准，MiniMax-M2.7得分率42\%）
+和Web可视化（ECharts七图仪表盘，ChatGPT风格交互）
+集成于统一系统，形成了法律智能分析的完整技术栈。
+
+平台的主要贡献包括：（1）提出了``检索-分析-校验''三Agent协作范式，
+有效缓解法律场景中的LLM幻觉问题；（2）构建了法律辩论的多Agent原型系统，
+为AI辅助法律论证提供探索性方案；（3）设计了30题法律能力评测基准，
+系统量化了通用LLM的法律表现；（4）全栈代码开源、支持Docker部署，
+为同类系统开发提供了可复用的参考实现。
+
+未来工作将围绕三个方向展开：（1）接入法律专有大模型（如ChatLaw、LaWGPT），
+提升法律推理准确率；（2）将辩论系统升级为多策略动态博弈架构，
+引入强化学习模型使Agent具备策略调整能力；
+（3）丰富数据维度（如引入裁判文书全文、庭审笔录），支持更细粒度的法律分析。
+
+\vspace{12pt}
+\noindent{\kaishu\small 致谢：感谢武汉大学信息管理学院张晶晶老师提供的实习机会，
+以及对本平台开发方向的指导建议。}
+
+% ============================================================
+% 参考文献
+% ============================================================
+\begin{thebibliography}{99}
+
+\bibitem{wang2019}
+王禄生. 司法大数据应用的治理意涵与风险规制[J]. 法制与社会发展, 2019, 25(4): 110--126.
+
+\bibitem{zuo2018}
+左卫民. 迈向大数据法律实证研究[J]. 法学研究, 2018, 40(4): 64--80.
+
+\bibitem{cui2023}
+崔亚东. 大语言模型在法律领域的应用：现状、挑战与展望[J]. 法律科学, 2023, 41(5): 3--18.
+
+\bibitem{lewis2020}
+Lewis P, Perez E, Piktus A, et al. Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks[C]//Advances in Neural Information Processing Systems, 2020, 33: 9459--9474.
+
+\bibitem{mullainathan2017}
+Mullainathan S, Spiess J. Machine Learning: An Applied Econometric Approach[J]. Journal of Economic Perspectives, 2017, 31(2): 87--106.
+
+\bibitem{bai2017}
+白建军. 法律实证研究方法[M]. 第二版. 北京: 北京大学出版社, 2017.
+
+\bibitem{cheng2019}
+程金华. 迈向科学化的法律实证研究[J]. 法学, 2019(4): 70--85.
+
+\bibitem{hou2020}
+侯猛. 司法过程中的社会科学分析[J]. 法商研究, 2020, 37(2): 15--28.
+
+\bibitem{slonim2021}
+Slonim N, Bilu Y, Alzate C, et al. An Autonomous Debating System[J]. Nature, 2021, 591(7850): 379--384.
+
+\bibitem{langgraph}
+LangChain. LangGraph: Build Language Agents as Graphs[EB/OL]. 2024. \url{https://github.com/langchain-ai/langgraph}.
+
+\bibitem{vaswani2017}
+Vaswani A, Shazeer N, Parmar N, et al. Attention Is All You Need[C]//Advances in Neural Information Processing Systems, 2017, 30: 5998--6008.
+
+\bibitem{brown2020}
+Brown T B, Mann B, Ryder N, et al. Language Models are Few-Shot Learners[C]//Advances in Neural Information Processing Systems, 2020, 33: 1877--1901.
+
+\bibitem{devlin2019}
+Devlin J, Chang M W, Lee K, et al. BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding[C]//Proceedings of NAACL-HLT, 2019: 4171--4186.
+
+\bibitem{robertson2009}
+Robertson S, Zaragoza H. The Probabilistic Relevance Framework: BM25 and Beyond[J]. Foundations and Trends in Information Retrieval, 2009, 3(4): 333--389.
+
+\bibitem{rosenbaum2002}
+Rosenbaum P R. Observational Studies[M]. 2nd ed. New York: Springer, 2002.
+
+\bibitem{athey2019}
+Athey S, Tibshirani J, Wager S. Generalized Random Forests[J]. Annals of Statistics, 2019, 47(2): 1148--1178.
+
+\bibitem{imbens2015}
+Imbens G W, Rubin D B. Causal Inference for Statistics, Social, and Biomedical Sciences[M]. Cambridge: Cambridge University Press, 2015.
+
+\bibitem{blei2003}
+Blei D M, Ng A Y, Jordan M I. Latent Dirichlet Allocation[J]. Journal of Machine Learning Research, 2003, 3: 993--1022.
+
+\bibitem{baron1986}
+Baron R M, Kenny D A. The Moderator-Mediator Variable Distinction in Social Psychological Research[J]. Journal of Personality and Social Psychology, 1986, 51(6): 1173--1182.
+
+\end{thebibliography}
+
+\end{document}
