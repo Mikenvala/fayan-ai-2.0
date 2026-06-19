@@ -3,10 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <title>法眼AI 2.0 · 统一平台</title>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.0/dist/echarts.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts-wordcloud@2.1.0/dist/echarts-wordcloud.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/marked@12.0.0/marked.min.js"></script>
+<script src="/static/lib/echarts.min.js?v=2"></script>
+<script src="/static/lib/echarts-wordcloud.min.js?v=2"></script>
+<script src="/static/lib/marked.min.js?v=2"></script>
 <style>
 /* ========== 全局样式 (ChatGPT 对标) ========== */
 :root{
@@ -28,25 +31,24 @@ body{
   background:rgba(255,255,255,.72);backdrop-filter:blur(20px) saturate(180%);
   -webkit-backdrop-filter:blur(20px) saturate(180%);border:1px solid rgba(255,255,255,.5)
 }
-/* ===== 顶部导航 (毛玻璃) ===== */
+/* ===== 顶部导航 ===== */
 .header{
-  background:rgba(255,255,255,.92);backdrop-filter:blur(24px) saturate(180%);
-  -webkit-backdrop-filter:blur(24px) saturate(180%);
-  border-bottom:1px solid rgba(0,0,0,.06);color:var(--text);
-  padding:0 28px;display:flex;align-items:center;justify-content:space-between;
-  height:56px;position:sticky;top:0;z-index:100
+  background:linear-gradient(135deg,#7F1D1D,#991B1B);
+  color:#FFD700 !important;padding:0 28px;display:flex;align-items:center;justify-content:space-between;
+  height:56px;position:sticky;top:0;z-index:100;
+  box-shadow:0 2px 8px rgba(127,29,29,.25)
 }
-.header .logo{display:flex;align-items:center;gap:12px;font-size:1.15rem;font-weight:700;letter-spacing:-.3px}
-.header .logo .icon{font-size:1.3rem;opacity:.8}
+.header .logo{display:flex;align-items:center;gap:12px;font-size:1.15rem;font-weight:700;letter-spacing:-.3px;color:#FFD700 !important}
+.header .logo .icon{font-size:1.3rem}
 .nav-tabs{display:flex;gap:2px;height:100%}
 .nav-tab{
   padding:0 22px;height:100%;display:flex;align-items:center;gap:6px;
-  border:none;background:none;color:#4B5563;font-size:.88rem;
-  cursor:pointer;transition:var(--transition);border-bottom:2px solid transparent;
+  border:none;background:none;color:#FFD700 !important;font-size:.88rem;
+  cursor:pointer;transition:all .2s;border-bottom:2px solid transparent;
   font-family:inherit;font-weight:500;letter-spacing:-.2px
 }
-.nav-tab:hover{color:var(--text);background:rgba(0,0,0,.03)}
-.nav-tab.active{color:var(--text);border-bottom-color:var(--brand);font-weight:600}
+.nav-tab:hover{color:#FFF8DC !important;background:rgba(255,255,255,.15)}
+.nav-tab.active{color:#FFD700 !important;border-bottom-color:#FFD700;font-weight:700}
 /* ===== 主体 ===== */
 .main{padding:20px 28px;max-width:1440px;margin:0 auto}
 .tab-content{display:none;animation:fadeSlideIn .35s cubic-bezier(.4,0,.2,1)}
@@ -397,6 +399,7 @@ body{
 @media(max-width:900px){.debate-layout{grid-template-columns:1fr}}
 
 </style>
+
 </head>
 <body>
 
@@ -681,6 +684,7 @@ async function loadDashboard() {
 
   } catch(e) {
     console.error('仪表盘加载失败:', e);
+    document.getElementById('overviewCards').innerHTML = '<div class="ov-card" style="grid-column:1/-1;color:#DC2626">❌ 仪表盘数据加载失败: '+e.message+'</div>';
   }
 }
 
