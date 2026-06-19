@@ -33,18 +33,32 @@
 ## 快速启动
 
 ```bash
-# 安装依赖
+# 1. 安装依赖
 pip3 install fastapi uvicorn langgraph langchain langchain-openai \
   scikit-learn numpy jieba rank_bm25 python-dotenv
 
-# 生成仪表盘数据
+# 2. 进入项目目录
+cd internship-tasks/task4-unified-platform
+
+# 3. 生成仪表盘数据（首次运行需要）
 python3 dashboard_data.py
 
-# 启动服务
-python3 -m uvicorn backend:app --host 0.0.0.0 --port 8800
+# 4. 启动服务
+python3 backend.py
 
-# 浏览器访问
+# 5. 浏览器访问
 open http://localhost:8800
+```
+
+> 如需后台持续运行：`screen -dmS fayan python3 backend.py`
+
+## 环境变量
+
+在项目根目录创建 `.env` 文件：
+
+```bash
+MINIMAX_API_KEY=your_key_here
+MINIMAX_BASE_URL=https://api.minimax.chat/v1
 ```
 
 ## 三大模块
@@ -59,6 +73,11 @@ open http://localhost:8800
 - **分析Agent**: 基于检索结果进行法律分析
 - **校验Agent**: 事实核查，防幻觉，确保引用准确
 - LangGraph 状态机编排: 意图→检索→分析→校验→格式化
+
+### ⚖️ 模拟辩论
+- 三Agent辩论：原告Agent vs 被告Agent vs 法官Agent
+- SSE 流式推送，实时展示辩论过程
+- 支持自定义辩题和辩论轮数
 
 ### 📄 报告生成
 - 一键生成 HTML 分析报告
