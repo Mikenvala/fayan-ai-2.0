@@ -8,7 +8,8 @@ services:
       - "8800:8800"
     environment:
       - MINIMAX_API_KEY=${MINIMAX_API_KEY}
+      - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimax.chat/v1}
     volumes:
       - ./all_cases_perfect.csv:/app/all_cases_perfect.csv:ro
-      - ./internship-tasks/task4-unified-platform/.cache:/app/internship-tasks/task4-unified-platform/.cache
+      - ./internship-tasks/task4-unified-platform/static/data:/app/internship-tasks/task4-unified-platform/static/data
     restart: unless-stopped

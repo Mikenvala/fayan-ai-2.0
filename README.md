@@ -84,9 +84,22 @@ open http://localhost:8800
 ### Docker 一键部署
 
 ```bash
+# 1. 设置 API Key（二选一）
+export MINIMAX_API_KEY=your_key_here
+# 或在项目根目录创建 .env 文件写入 MINIMAX_API_KEY=your_key_here
+
+# 2. 构建并启动
 docker-compose up -d
-# 访问 http://localhost:8800
+
+# 3. 查看日志（等待数据预计算完成）
+docker-compose logs -f
+
+# 4. 浏览器访问
+open http://localhost:8800
 ```
+
+> ⚠️ 首次启动需要约 30 秒预计算 10,241 条仪表盘数据。
+> 停止: `docker-compose down`
 
 ---
 
