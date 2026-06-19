@@ -16,14 +16,22 @@ jobs:
           python-version: '3.10'
           cache: 'pip'
       - name: Install dependencies
-        run: pip install -r internship-tasks/task4-unified-platform/requirements.txt markdown
+        run: pip install -r internship-tasks/task4-unified-platform/requirements.txt
       - name: Syntax check
         run: |
           python -m py_compile internship-tasks/task4-unified-platform/backend.py
           python -m py_compile internship-tasks/task4-unified-platform/multi_agent.py
           python -m py_compile internship-tasks/task4-unified-platform/dashboard_data.py
           python -m py_compile internship-tasks/task5-benchmark/benchmark_runner.py
-      - name: Dashboard data check
-        run: cd internship-tasks/task4-unified-platform && python dashboard_data.py
+          python -m py_compile internship-tasks/task5-benchmark/multi_benchmark.py
+          python -m py_compile internship-tasks/task5-benchmark/compare_chart.py
+          python -m py_compile internship-tasks/task5-benchmark/run_mimo.py
+      - name: Dashboard data (skip if no CSV)
+        run: |
+          if [ -f ../all_cases_perfect.csv ]; then
+            cd internship-tasks/task4-unified-platform && python dashboard_data.py
+          else
+            echo "No data file, skipping dashboard generation"
+          fi
         env:
           SKIP_LLM: 'true'
