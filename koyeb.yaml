@@ -1,7 +1,0 @@
-# Koyeb 部署配置
-# 1. 打开 https://app.koyeb.com 注册（免费，无需信用卡）
-# 2. Create App → GitHub → 选择 Mikenvala/fayan-ai-2.0
-# 3. 选择 Dockerfile 部署
-# 4. 设置环境变量: MINIMAX_API_KEY=你的key
-# 5. 端口: 8800
-# 6. Deploy！
