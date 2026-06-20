@@ -24,6 +24,7 @@ Thumbs.db
 
 # Data (large files)
 *.csv
+!all_cases_perfect.csv
 *.json
 !static/data/*.json
 !package.json
