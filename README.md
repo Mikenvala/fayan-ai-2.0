@@ -56,6 +56,18 @@
 - AI 输出智能美化（Unicode 框线图 → 精美信息卡片）
 - Chrome Headless 渲染 PDF
 
+
+## 🖥 效果展示
+
+| 数据仪表盘 | 智能问答 |
+|------------|----------|
+| ![仪表盘](docs/images/dashboard.png) | ![问答](docs/images/qa.png) |
+
+| 模拟辩论 | 报告生成 |
+|----------|----------|
+| ![辩论](docs/images/debate.png) | ![报告](docs/images/report.png) |
+
+
 ---
 
 ## 🚀 快速启动
