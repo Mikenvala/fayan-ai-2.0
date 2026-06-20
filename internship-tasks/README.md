@@ -1,51 +1,21 @@
-# 实习模拟任务 · 法眼AI 数据分析与智能体开发
+# 法眼AI 2.0 · 任务模块
 
-模拟武大信管实验室的真实实习工作场景，共三道任务，建议按顺序完成。
+| 目录 | 内容 | 技术栈 |
+|------|------|--------|
+| `task1-analysis/` | 数据清洗与统计分析 | Pandas, Matplotlib, scikit-learn |
+| `task2-agent/` | 法律案件检索 Agent | LangChain, BM25, TF-IDF |
+| `task3-report/` | 因果推断分析报告 | Python, LaTeX |
+| `task4-unified-platform/` | 统一 Web 平台 | FastAPI, LangGraph, ECharts |
+| `task5-benchmark/` | 多模型法律能力评测 | 六款国产大模型 API |
 
-| 任务 | 主题 | 技能点 | 预计耗时 | 交付物 |
-|------|------|--------|---------|--------|
-| Task 1 | 裁判文书大数据深度分析 | Pandas/Matplotlib/统计分析 | 2-3h | analysis_report.py + 图表 |
-| Task 2 | 法律案件智能推荐 Agent | LangChain/Agent 设计/RAG | 2-3h | case_agent.py |
-| Task 3 | 数据分析报告撰写 | 学术写作/LaTeX/可视化 | 1-2h | report.pdf |
-
----
-
-## 导师留言
-
-> 志达你好，
->
-> 欢迎加入实验室。目前我们正在做法律智能方向的研究，你之前做的法眼AI已经有了很好的基础。
-> 接下来三周，我希望你完成以下工作：
->
-> **第一周：** 对现有 10,241 条裁判文书做一轮深度数据分析，不要只统计数量，
-> 要挖掘一些有价值的规律——比如不同案由的关键词共现模式、判决书篇幅与案件复杂度的关系、
-> 胜诉/败诉的文本特征等。用 Python 脚本实现，输出图表和分析结论。
->
-> **第二周：** 在分析的基础上，做一个智能体 Demo——用户输入一段案情描述，
-> Agent 自动检索最相似的历史案例，并给出参考建议。用 LangChain 的 Agent 框架实现，
-> 支持多轮对话，每次都能给出案例引用（案号+判决要点）。
->
-> **第三周：** 把第一周的分析结果写成一份规范的学术报告，LaTeX 格式，
-> 参考《情报学报》的排版风格。图表要清晰，结论要有数据支撑。
->
-> 三周后我们组会汇报，加油！
->
-> —— 张老师
->
-> zhangjingjing@whu.edu.cn
-
----
-
-## 快速开始
+## 数据
 
 ```bash
-# 所有任务都在这个目录下完成
-cd internship-tasks
-
-# Task 1 用到的数据
-DATA=../all_cases_perfect.csv
-
-# Task 2 需要的 API Key（已在 .env 中配置）
-source ../.env
+DATA=../all_cases_perfect.csv   # 10,241 条清洗后裁判文书
 ```
 
+## 环境变量
+
+```bash
+source ../.env   # MINIMAX_API_KEY, DEEPSEEK_API_KEY 等
+```
