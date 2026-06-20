@@ -17,7 +17,7 @@ import re
 from collections import Counter, defaultdict
 
 ABS_DIR = os.path.dirname(os.path.abspath(__file__))
-CSV_PATH = os.path.join(ABS_DIR, "..", "..", "all_cases_perfect.csv")
+CSV_PATH = os.path.join(ABS_DIR, "..", "all_cases_perfect.csv")
 OUTPUT_DIR = os.path.join(ABS_DIR, "static", "data")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
