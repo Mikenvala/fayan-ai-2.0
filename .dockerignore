@@ -1,32 +1,13 @@
-# Git
-.git/
-.gitignore
-
-# Python
-__pycache__/
-*.py[cod]
-*.egg-info/
-venv/
-.venv/
-
-# Environment
-.env
-*.env.local
-
-# IDE
-.vscode/
-.idea/
-*.swp
-
-# OS
+.git
+__pycache__
+*.pyc
 .DS_Store
-
-# Large outputs
+.env
 *.log
-/tmp/
-
-# Node
-node_modules/
-
-# Keep the CSV (needed)
-# Keep task outputs
+screenshots
+docs
+data-cleaning
+paper-platform
+internship-tasks
+venv
+.venv
