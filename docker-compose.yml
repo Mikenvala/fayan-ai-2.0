@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   fayan-ai:
@@ -10,6 +9,5 @@ services:
       - MINIMAX_API_KEY=${MINIMAX_API_KEY}
       - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimax.chat/v1}
     volumes:
-      - ./all_cases_perfect.csv:/app/all_cases_perfect.csv:ro
       - ./platform/static/data:/app/platform/static/data
     restart: unless-stopped
