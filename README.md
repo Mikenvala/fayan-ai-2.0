@@ -14,13 +14,13 @@
 
 ```
 ┌────────────────────────────────────────┐
-│         前端 SPA (index.html)         │
+│         前端 SPA (index.html)           │
 │   📊 数据仪表盘  💬 智能问答  📄 报告    │
 └────────────────────────────────────────┘
                     │ REST / SSE
                     ▼
 ┌────────────────────────────────────────┐
-│        FastAPI (app.py)             │
+│        FastAPI (app.py)                 │
 │   /api/dashboard  /api/agent  /api/report│
 └────────────────────────────────────────┘
          │              │            │
@@ -55,10 +55,6 @@
 - 一键生成 HTML/PDF 分析报告
 - AI 输出智能美化（Unicode 框线图 → 精美信息卡片）
 - Chrome Headless 渲染 PDF
-
-### 🧪 LLM 法律能力评测
-- 30 题五类评测基准（法条适用 / 罪名判断 / 量刑推理 / 案例分析 / 程序问题）
-- 六款中国大模型横向对比（MiniMax / DeepSeek / Kimi / Qwen / GLM / Mimo）
 
 ---
 
@@ -95,22 +91,41 @@ open http://localhost:8800
 
 ---
 
+## 🔧 数据清洗流水线
+
+原始裁判文书数据（10,321 条 × 15 列）经过 6 阶段清洗，修复关键词、原告诉求、判决结果三大类的质量问题。
+
+| 指标 | 清洗前 | 清洗后 |
+|------|--------|--------|
+| 关键词符号连接 | 4,947+ | **0** |
+| 关键词空值 | ~10,000 | **32** |
+| 原告诉求填充率 | 34.5% | **100%** |
+| 判决结果填充率 | ~92% | **~100%** |
+
+```bash
+cd data-cleaning
+python3 fix_kw_swap.py          # Swap机制去重
+python3 fix_empty_dup.py         # 空值修复 (LLM)
+python3 fix_final_34.py          # 顽固符号行
+python3 fix_claims_all_rows.py   # 原告诉求重写
+python3 fix_judgment_final.py    # 判决结果修复
+python3 extract_perfect.py       # 导出完美行
+```
+
+> 详见 [data-cleaning/README.md](data-cleaning/README.md)
+
+---
+
 ## 📂 项目结构
 
 ```
-├── 
-│   ├── task1-analysis/              # 数据清洗与统计分析
-│   ├── task2-agent/                 # 单Agent 检索系统
-│   ├── task3-report/                # 因果推断分析报告
-│   ├── platform/      # 统一 Web 平台
-│   │   ├── app.py               # FastAPI 入口
-│   │   ├── agents.py            # LangGraph 多Agent
-│   │   ├── data.py              # 仪表盘预计算
-│   │   ├── static/lib/              # ECharts 等前端库
-│   │   └── templates/
-│   │       └── index.html          # SPA 前端 (1122行)
-│   └── task5-benchmark/             # 多模型法律能力评测
-├── paper-platform/                  # 课程论文
+├── platform/                 # Web 平台
+│   ├── app.py                # FastAPI 入口
+│   ├── agents.py             # LangGraph 多Agent
+│   ├── data.py               # 仪表盘预计算
+│   ├── templates/index.html  # SPA 前端 (1122行)
+│   └── static/lib/           # ECharts, marked.js
+├── data-cleaning/            # 数据清洗流水线 (6阶段)
 ├── Dockerfile
 ├── docker-compose.yml
 └── docker-entrypoint.sh
@@ -126,7 +141,7 @@ open http://localhost:8800
 | **后端** | FastAPI, Uvicorn, SSE Streaming |
 | **前端** | Vanilla HTML/CSS/JS, ECharts 5.5, marked.js |
 | **检索** | BM25, TF-IDF char-ngram, jieba |
-| **分析** | scikit-learn, NumPy, Pandas |
+| **数据清洗** | Python CSV, ThreadPoolExecutor, DeepSeek API |
 | **部署** | Docker, docker-compose, GitHub Actions CI |
 
 ---
