@@ -61,11 +61,11 @@
 
 | 数据仪表盘 | 智能问答 |
 |------------|----------|
-| ![仪表盘](docs/images/dashboard.png) | ![问答](docs/images/qa.png) |
+| ![仪表盘](docs/images/dashboard.jpg) | ![问答](docs/images/qa.jpg) |
 
 | 模拟辩论 | 报告生成 |
 |----------|----------|
-| ![辩论](docs/images/debate.png) | ![报告](docs/images/report.png) |
+| ![辩论](docs/images/debate.jpg) | ![报告](docs/images/report.jpg) |
 
 
 ---
