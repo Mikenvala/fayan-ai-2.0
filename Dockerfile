@@ -9,14 +9,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # 复制依赖文件并安装
-COPY internship-tasks/task4-unified-platform/requirements.txt /tmp/requirements.txt
+COPY platform/requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 # 复制全部项目文件
 COPY . .
 
 # 设置工作目录
-WORKDIR /app/internship-tasks/task4-unified-platform
+WORKDIR /app/platform
 
 # 暴露端口
 EXPOSE 8800

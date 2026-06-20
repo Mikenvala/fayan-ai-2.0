@@ -1,6 +1,6 @@
 #!/bin/bash
 # 法眼AI 2.0 全页截图脚本
-# 前提：python3 backend.py 正在运行 (localhost:8800)
+# 前提：python3 app.py 正在运行 (localhost:8800)
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 OUT=screenshots
 

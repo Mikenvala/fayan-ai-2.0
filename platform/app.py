@@ -7,7 +7,7 @@ FastAPI 后端，提供三大模块：
   - /api/agent/*        多Agent智能问答
   - /api/report/*       报告生成
 
-启动: python backend.py
+启动: python app.py
 访问: http://localhost:8800
 """
 
@@ -46,12 +46,12 @@ async def lifespan(app: FastAPI):
             dashboard_cache = json.load(f)
         print("   📊 仪表盘数据已缓存")
     else:
-        from dashboard_data import compute_dashboard_data
+        from data import compute_dashboard_data
         dashboard_cache = compute_dashboard_data()
         print("   📊 仪表盘数据已计算")
 
     # 初始化多Agent
-    from multi_agent import FaYanMultiAgent
+    from agents import FaYanMultiAgent
     agent_instance = FaYanMultiAgent()
     print("   🤖 多Agent系统已就绪")
     print(f"✅ 服务启动: http://localhost:8800")
@@ -107,7 +107,7 @@ class ReportRequest(BaseModel):
 @app.get("/")
 async def index():
     """主页 - 统一平台"""
-    return FileResponse(os.path.join(ABS_DIR, "templates", "platform.html"))
+    return FileResponse(os.path.join(ABS_DIR, "templates", "index.html"))
 
 # ============================================================
 # 仪表盘 API
@@ -458,7 +458,7 @@ async def search_cases(q: str = "", top_k: int = 5):
     """快速案例搜索"""
     if not q:
         return JSONResponse([])
-    from multi_agent import get_retriever
+    from agents import get_retriever
     retriever = get_retriever()
     cases = retriever.search(q, top_k=top_k)
     # 精简返回字段

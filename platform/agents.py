@@ -7,7 +7,7 @@
   - 分析Agent：基于检索结果进行法律分析
   - 校验Agent：事实核查，确保引用准确、无幻觉
 
-运行: python multi_agent.py
+运行: python agents.py
 """
 
 import csv

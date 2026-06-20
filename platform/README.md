@@ -6,13 +6,13 @@
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│           前端 (platform.html · SPA)                 │
+│           前端 (index.html · SPA)                 │
 │   📊 数据仪表盘    💬 智能问答    📄 报告生成          │
 └─────────────────────────────────────────────────────┘
                          │ REST API
                          ▼
 ┌─────────────────────────────────────────────────────┐
-│           FastAPI Backend (backend.py)               │
+│           FastAPI Backend (app.py)               │
 │   /api/dashboard/*  /api/agent/*  /api/report/*      │
 └─────────────────────────────────────────────────────┘
                          │
@@ -38,16 +38,16 @@ pip3 install fastapi uvicorn langgraph langchain langchain-openai \
   scikit-learn numpy jieba rank_bm25 python-dotenv markdown
 
 # 2. 生成仪表盘数据（首次运行需要）
-python3 dashboard_data.py
+python3 data.py
 
 # 3. 启动服务
-python3 backend.py
+python3 app.py
 
 # 4. 浏览器访问
 open http://localhost:8800
 ```
 
-> 后台持续运行: `screen -dmS fayan python3 backend.py`
+> 后台持续运行: `screen -dmS fayan python3 app.py`
 
 ## 环境变量
 

@@ -11,5 +11,5 @@ services:
       - MINIMAX_BASE_URL=${MINIMAX_BASE_URL:-https://api.minimax.chat/v1}
     volumes:
       - ./all_cases_perfect.csv:/app/all_cases_perfect.csv:ro
-      - ./internship-tasks/task4-unified-platform/static/data:/app/internship-tasks/task4-unified-platform/static/data
+      - ./platform/static/data:/app/platform/static/data
     restart: unless-stopped

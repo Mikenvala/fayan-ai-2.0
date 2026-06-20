@@ -14,13 +14,13 @@
 
 ```
 ┌────────────────────────────────────────┐
-│         前端 SPA (platform.html)         │
+│         前端 SPA (index.html)         │
 │   📊 数据仪表盘  💬 智能问答  📄 报告    │
 └────────────────────────────────────────┘
                     │ REST / SSE
                     ▼
 ┌────────────────────────────────────────┐
-│        FastAPI (backend.py)             │
+│        FastAPI (app.py)             │
 │   /api/dashboard  /api/agent  /api/report│
 └────────────────────────────────────────┘
          │              │            │
@@ -70,14 +70,14 @@ pip3 install fastapi uvicorn langgraph langchain langchain-openai \
   scikit-learn numpy jieba rank_bm25 python-dotenv markdown
 
 # 2. 设置 API Key
-echo 'MINIMAX_API_KEY=your_key_here' > internship-tasks/task4-unified-platform/.env
+echo 'MINIMAX_API_KEY=your_key_here' > platform/.env
 
 # 3. 预计算仪表盘数据
-cd internship-tasks/task4-unified-platform
-python3 dashboard_data.py
+cd platform
+python3 data.py
 
 # 4. 启动服务
-python3 backend.py
+python3 app.py
 
 # 5. 浏览器访问
 open http://localhost:8800
@@ -98,17 +98,17 @@ open http://localhost:8800
 ## 📂 项目结构
 
 ```
-├── internship-tasks/
+├── 
 │   ├── task1-analysis/              # 数据清洗与统计分析
 │   ├── task2-agent/                 # 单Agent 检索系统
 │   ├── task3-report/                # 因果推断分析报告
-│   ├── task4-unified-platform/      # 统一 Web 平台
-│   │   ├── backend.py               # FastAPI 后端 (672行)
-│   │   ├── multi_agent.py           # LangGraph 多Agent
-│   │   ├── dashboard_data.py        # 仪表盘预计算
+│   ├── platform/      # 统一 Web 平台
+│   │   ├── app.py               # FastAPI 入口
+│   │   ├── agents.py            # LangGraph 多Agent
+│   │   ├── data.py              # 仪表盘预计算
 │   │   ├── static/lib/              # ECharts 等前端库
 │   │   └── templates/
-│   │       └── platform.html        # 三合一 SPA 前端 (1122行)
+│   │       └── index.html          # SPA 前端 (1122行)
 │   └── task5-benchmark/             # 多模型法律能力评测
 ├── paper-platform/                  # 课程论文
 ├── Dockerfile
