@@ -6,7 +6,7 @@
 [![Docker](https://img.shields.io/badge/Docker-ready-2496ED.svg)](https://www.docker.com/)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-**LangGraph 多Agent协作 + FastAPI + ECharts + MiniMax LLM** | 大数据分析 · 智能体开发 · 智能应用 · 学术报告
+**LangGraph 多Agent协作 + FastAPI + ECharts** 的智能法律案例分析开源平台。
 
 ---
 
@@ -27,33 +27,38 @@
          ▼              ▼            ▼
 ┌────────────┐ ┌────────────┐ ┌──────────┐
 │ LangGraph   │ │ 数据分析    │ │ PDF报告   │
-│ 多Agent     │ │ 10241条     │ │ Chrome    │
+│ 多Agent     │ │ 10,241条    │ │ Chrome    │
 │ 协作系统     │ │ 裁判文书    │ │ 无头渲染   │
 └────────────┘ └────────────┘ └──────────┘
 ```
 
-## ✨ 四大模块
+## ✨ 功能模块
 
-### 📊 Task 1 — 大数据分析
-- 描述统计 → Logistic/LASSO → LDA → Mann-Kendall/STL
-- **因果推断四层框架**: PSM + IPW + DID + 因果森林 + 中介分析 + Rosenbaum 敏感性检验
-- 产出 20+ 张专业图表
+### 📊 数据仪表盘
+- 基于 10,241 条裁判文书数据的可视化分析
+- 7 张 ECharts 交互图表：案由分布、大类饼图、判决结果、关键词柱状图、篇幅箱线图、关键词共现网络、词云图
+- 数据预计算 + 内存缓存，API 响应 < 10ms
 
-### 🤖 Task 2 — 智能体开发
-- LangChain Agent + BM25 + TF-IDF char-ngram 混合检索
-- MiniMax LLM 驱动，防幻觉机制
-- 意图识别 → 类案检索 (Top-3 准确率 70%+)
+### 💬 智能问答（多Agent协作）
+- **检索Agent**: BM25 + TF-IDF 混合检索 Top 3 相似案例
+- **分析Agent**: LLM 法律分析，引用法条与类案
+- **校验Agent**: 事实核查，防幻觉，自动修订循环
+- LangGraph 状态机编排: 意图识别 → 检索 → 分析 → 校验 → 格式化输出
+- SSE 流式输出，ChatGPT 风格 UI（玻璃拟态、Markdown 渲染）
 
-### 🧠 Task 4 — 多Agent协作平台
-- **LangGraph 三Agent 协作**: 检索Agent → 分析Agent → 校验Agent
-- **SSE 流式输出** + Markdown 实时渲染
-- **ChatGPT 风格 UI**: 玻璃拟态、高斯模糊、打字光标
-- 7 张 ECharts 交互图表 (含词云、关键词共现网络)
+### ⚖️ 模拟辩论
+- 三Agent 对抗辩论：原告 Agent vs 被告 Agent vs 法官 Agent
+- SSE 流式实时推送辩论进程
+- 支持 1~5 轮可配置辩论深度
 
-### 📝 Task 3 — CSSCI 论文
-- LaTeX 格式学术论文 (15页, 25篇参考文献)
-- 中英文结构化摘要、因果推断完整框架
-- 6 张三线表 + 8 张图
+### 📄 报告生成
+- 一键生成 HTML/PDF 分析报告
+- AI 输出智能美化（Unicode 框线图 → 精美信息卡片）
+- Chrome Headless 渲染 PDF
+
+### 🧪 LLM 法律能力评测
+- 30 题五类评测基准（法条适用 / 罪名判断 / 量刑推理 / 案例分析 / 程序问题）
+- 六款中国大模型横向对比（MiniMax / DeepSeek / Kimi / Qwen / GLM / Mimo）
 
 ---
 
@@ -61,11 +66,11 @@
 
 ```bash
 # 1. 安装依赖
-pip3 install fastapi uvicorn langgraph langchain langchain-openai   scikit-learn numpy jieba rank_bm25 python-dotenv markdown
+pip3 install fastapi uvicorn langgraph langchain langchain-openai \
+  scikit-learn numpy jieba rank_bm25 python-dotenv markdown
 
-# 2. 设置 API Key（在项目根目录创建 .env）
+# 2. 设置 API Key
 echo 'MINIMAX_API_KEY=your_key_here' > internship-tasks/task4-unified-platform/.env
-echo 'MINIMAX_BASE_URL=https://api.minimax.chat/v1' >> internship-tasks/task4-unified-platform/.env
 
 # 3. 预计算仪表盘数据
 cd internship-tasks/task4-unified-platform
@@ -78,28 +83,15 @@ python3 backend.py
 open http://localhost:8800
 ```
 
-> 💡 **后台持续运行**:   
-> 💡 **多模型评测**: 见 
-
 ### Docker 一键部署
 
 ```bash
-# 1. 设置 API Key（二选一）
 export MINIMAX_API_KEY=your_key_here
-# 或在项目根目录创建 .env 文件写入 MINIMAX_API_KEY=your_key_here
-
-# 2. 构建并启动
 docker-compose up -d
-
-# 3. 查看日志（等待数据预计算完成）
-docker-compose logs -f
-
-# 4. 浏览器访问
 open http://localhost:8800
 ```
 
-> ⚠️ 首次启动需要约 30 秒预计算 10,241 条仪表盘数据。
-> 停止: `docker-compose down`
+> 首次启动约 30 秒预计算数据。停止: `docker-compose down`
 
 ---
 
@@ -107,18 +99,21 @@ open http://localhost:8800
 
 ```
 ├── internship-tasks/
-│   ├── task1-analysis/      # 大数据分析 (因果推断)
-│   ├── task2-agent/         # Agent 开发 (LangChain)
-│   ├── task3-report/        # CSSCI 论文 (LaTeX)
-│   └── task4-unified-platform/  # 统一平台
-│       ├── backend.py       # FastAPI 后端
-│       ├── multi_agent.py   # LangGraph 多Agent
-│       ├── dashboard_data.py # 仪表盘数据
-│       └── templates/
-│           └── platform.html # 三合一前端
+│   ├── task1-analysis/              # 数据清洗与统计分析
+│   ├── task2-agent/                 # 单Agent 检索系统
+│   ├── task3-report/                # 因果推断分析报告
+│   ├── task4-unified-platform/      # 统一 Web 平台
+│   │   ├── backend.py               # FastAPI 后端 (672行)
+│   │   ├── multi_agent.py           # LangGraph 多Agent
+│   │   ├── dashboard_data.py        # 仪表盘预计算
+│   │   ├── static/lib/              # ECharts 等前端库
+│   │   └── templates/
+│   │       └── platform.html        # 三合一 SPA 前端 (1122行)
+│   └── task5-benchmark/             # 多模型法律能力评测
+├── paper-platform/                  # 课程论文
 ├── Dockerfile
 ├── docker-compose.yml
-└── requirements.txt
+└── docker-entrypoint.sh
 ```
 
 ---
@@ -127,12 +122,12 @@ open http://localhost:8800
 
 | 层级 | 技术 |
 |------|------|
-| **LLM** | MiniMax M2.7, LangChain, LangGraph |
-| **检索** | BM25, TF-IDF char-ngram, jieba |
+| **LLM 编排** | LangChain, LangGraph |
 | **后端** | FastAPI, Uvicorn, SSE Streaming |
-| **前端** | ECharts, marked.js, 原生 HTML/CSS/JS |
-| **分析** | scikit-learn, NumPy, Pandas, 因果推断 |
-| **工程** | Docker, Git, Chrome Headless PDF |
+| **前端** | Vanilla HTML/CSS/JS, ECharts 5.5, marked.js |
+| **检索** | BM25, TF-IDF char-ngram, jieba |
+| **分析** | scikit-learn, NumPy, Pandas |
+| **部署** | Docker, docker-compose, GitHub Actions CI |
 
 ---
 
