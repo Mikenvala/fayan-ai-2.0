@@ -72,36 +72,46 @@
 
 ## 🚀 快速启动
 
+### 方式一：Python 直接启动（推荐开发调试）
+
 ```bash
-# 1. 安装依赖
+# 1. 安装依赖（一次性）
 pip3 install fastapi uvicorn langgraph langchain langchain-openai \
-  scikit-learn numpy jieba rank_bm25 python-dotenv markdown
+  scikit-learn numpy jieba rank_bm25 python-dotenv
 
-# 2. 设置 API Key
-echo 'MINIMAX_API_KEY=your_key_here' > platform/.env
+# 2. 设置 MiniMax API Key
+export MINIMAX_API_KEY=sk-your-key-here
 
-# 3. 预计算仪表盘数据
+# 3. 预计算仪表盘数据（首次必须，约 5 秒）
 cd platform
 python3 data.py
 
-# 4. 启动服务
+# 4. 启动服务（前台运行，Ctrl+C 停止）
 python3 app.py
 
-# 5. 浏览器访问
+# 5. 浏览器打开
 open http://localhost:8800
 ```
 
-### Docker 一键部署
+终端输出 `Uvicorn running on http://0.0.0.0:8800` 即启动成功。
+
+> 💡 **为什么用 Python 启动？** 改代码后 `Ctrl+C` → `python3 app.py`，3 秒生效。Docker 每次要重构建镜像（30 秒+），开发效率低。
+
+### 方式二：Docker 一键部署（推荐分发/演示）
 
 ```bash
+# 对方无需装 Python、配依赖、下载数据——一个命令跑起来
 export MINIMAX_API_KEY=your_key_here
 docker-compose up -d
 open http://localhost:8800
 ```
 
-> 首次启动约 30 秒预计算数据。停止: `docker-compose down`
+| 场景 | 推荐方式 |
+|------|---------|
+| 自己开发 / 改代码 | Python `python3 app.py` |
+| 给别人用 / 演示 | Docker `docker-compose up -d` |
 
----
+> 首次启动约 30 秒预计算数据。停止: `Ctrl+C` (Python) / `docker-compose down` (Docker)
 
 ## 🔧 数据清洗流水线
 
