@@ -37,7 +37,7 @@ from langgraph.checkpoint.memory import MemorySaver
 # ============================================================
 # 配置
 # ============================================================
-CSV_PATH = os.path.join(ABS_DIR, "..", "..", "all_cases_perfect.csv")
+CSV_PATH = os.path.join(ABS_DIR, "..", "all_cases_perfect.csv")
 INDEX_CACHE_DIR = os.path.join(ABS_DIR, ".cache")
 os.makedirs(INDEX_CACHE_DIR, exist_ok=True)
 
