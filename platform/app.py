@@ -98,6 +98,7 @@ class ChatResponse(BaseModel):
 class ReportRequest(BaseModel):
     title: Optional[str] = "法眼AI 案例分析报告"
     chat_history: Optional[List[dict]] = []
+    debate: Optional[dict] = None
     format: Optional[str] = "html"  # html or pdf
     queries: Optional[List[str]] = []
 
@@ -359,6 +360,10 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
 .chat-content{background:#fff;border-radius:12px;padding:14px 20px;max-width:700px;box-shadow:0 2px 8px rgba(0,0,0,.04);font-size:.88rem}
 .ai-msg .chat-content{border-top-left-radius:4px}
 .user .chat-content{border-top-right-radius:4px;background:#f0f4ff}
+.debate-plaintiff-card{border-left:4px solid #dc2626;background:#fef2f2;padding:14px 18px;margin:12px 0;border-radius:0 8px 8px 0}
+.debate-defendant-card{border-left:4px solid #2563eb;background:#eff6ff;padding:14px 18px;margin:12px 0;border-radius:0 8px 8px 0}
+.debate-judge-card{background:linear-gradient(135deg,#f5f3ff,#faf5ff);border-left:4px solid #7c3aed;padding:18px 20px;margin:16px 0;border-radius:0 8px 8px 0}
+.debate-role-label{font-weight:700;font-size:.82rem;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .footer{margin-top:48px;padding:24px;text-align:center;color:#999;font-size:.78rem;border-top:1px solid #eee;background:#fff;border-radius:16px}
 </style>
 </head>
@@ -417,6 +422,49 @@ h2{font-size:1.15rem;font-weight:700;color:#0f3460;margin:32px 0 16px;padding-le
             rendered = _md.markdown(text, extensions=['tables', 'fenced_code', 'codehilite'])
             parts.append(rendered)
             parts.append('</div></div>')
+        parts.append('</div>')
+
+    # Footer
+    # 六、模拟法庭辩论（如果有）
+    if req.debate:
+        parts.append('<div class="section"><h2>六、模拟法庭辩论</h2>')
+        facts_text = req.debate.get("facts","")
+        if facts_text:
+            parts.append(f'<p style="color:#555;font-size:.85rem;margin-bottom:6px"><strong>📋 案件：</strong>{facts_text}</p>')
+        focus_text = req.debate.get("focus","")
+        if focus_text:
+            parts.append(f'<p style="color:#555;font-size:.85rem;margin-bottom:18px"><strong>🎯 争议焦点：</strong>{focus_text}</p>')
+
+        transcript = req.debate.get("transcript", [])
+        if transcript:
+            parts.append('<div style="margin:16px 0"><h3 style="color:#0f3460;font-size:1rem;margin-bottom:12px">🗣 辩论过程</h3>')
+            for i, t in enumerate(transcript):
+                role = t.get("role","")
+                content = t.get("content","")
+                round_num = t.get("round",0)
+                if role == "plaintiff":
+                    label = "👤 原告律师"
+                    card_class = "debate-plaintiff-card"
+                elif role == "defendant":
+                    label = "👤 被告律师"
+                    card_class = "debate-defendant-card"
+                else:
+                    label = "👤 发言人"
+                    card_class = "debate-plaintiff-card"
+                rendered_t = _md.markdown(content, extensions=['tables','fenced_code'])
+                parts.append(f'<div class="{card_class}">')
+                parts.append(f'<div class="debate-role-label">{label} · 第{round_num}轮</div>')
+                parts.append(f'<div class="md-content" style="font-size:.85rem">{rendered_t}</div>')
+                parts.append('</div>')
+            parts.append('</div>')
+
+        verdict = req.debate.get("verdict","")
+        if verdict:
+            parts.append('<div class="debate-judge-card">')
+            parts.append('<div class="debate-role-label" style="color:#7c3aed;font-size:.88rem">⚖️ 法官终裁</div>')
+            rendered_v = _md.markdown(verdict, extensions=['tables','fenced_code'])
+            parts.append(f'<div class="md-content" style="font-size:.85rem">{rendered_v}</div>')
+            parts.append('</div>')
         parts.append('</div>')
 
     # Footer
